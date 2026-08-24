@@ -80,8 +80,26 @@ export function LoginHero() {
       </div>
 
       {/* Conteudo — normal-flow, velocidade normal de scroll */}
-      <div className="relative z-10 mx-auto max-w-6xl px-6 pt-[150px] pb-40 md:px-16">
-        <div className="max-w-[480px]">
+      <div className="relative z-10 mx-auto max-w-6xl px-6 pb-40 md:px-16 md:pt-[150px]">
+        {/* Mobile: foto no topo, normal-flow (handoff: "mesma sequencia em
+            coluna; foto no topo com mascara"). No desktop a foto já aparece
+            como camada de fundo (layer3 acima), entao aqui e md:hidden. */}
+        <div className="-mx-6 mb-8 h-[280px] md:hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/victor-hero.jpg"
+            alt=""
+            className="h-full w-full object-cover"
+            style={{
+              objectPosition: "50% 12%",
+              maskImage: "linear-gradient(to bottom, #000 70%, transparent)",
+              WebkitMaskImage: "linear-gradient(to bottom, #000 70%, transparent)",
+              filter: "contrast(1.05) saturate(0.92)",
+            }}
+          />
+        </div>
+
+        <div className="max-w-[480px] pt-8 md:pt-0">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">
             Consultoria de alta performance
           </p>

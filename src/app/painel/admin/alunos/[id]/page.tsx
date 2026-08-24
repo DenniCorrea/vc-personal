@@ -59,20 +59,20 @@ export default async function PaginaAdminAlunoDetalhe({ params }: PageProps<"/pa
 
   return (
     <main>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-line text-[18px] text-ink-soft">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-[18px] text-ink-soft">
             {aluno.nome.charAt(0).toUpperCase()}
           </div>
           <div>
-            <h1 className="font-display text-[30px] text-ink">{aluno.nome}</h1>
+            <h1 className="font-display text-[24px] text-ink lg:text-[30px]">{aluno.nome}</h1>
             <p className="text-[13px] text-ink-soft">
               {aluno.assinaturas[0]?.plano.nome ?? "Sem plano ativo"}
               {aluno.anamnese?.objetivo && ` · ${ROTULO_OBJETIVO[aluno.anamnese.objetivo]}`}
             </p>
           </div>
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex shrink-0 gap-2.5">
           <Link
             href={`/painel/admin/conversas/${aluno.id}`}
             className="rounded-[2px] border border-line px-4 py-2.5 text-[12px] font-medium text-ink"
@@ -88,7 +88,7 @@ export default async function PaginaAdminAlunoDetalhe({ params }: PageProps<"/pa
         </div>
       </div>
 
-      <div className="mt-8 flex gap-3 border-b border-line text-[13px]">
+      <div className="mt-8 flex gap-3 overflow-x-auto border-b border-line text-[13px]">
         <span className="border-b-2 border-accent px-1 pb-3 text-ink">Visão geral</span>
         <Link href={`/painel/admin/treinos/aluno/${aluno.id}`} className="px-1 pb-3 text-ink-soft hover:text-ink">
           Ficha de treino
@@ -101,7 +101,7 @@ export default async function PaginaAdminAlunoDetalhe({ params }: PageProps<"/pa
         </Link>
       </div>
 
-      <div className="mt-6 grid grid-cols-[1fr_300px] gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-col gap-5">
           {avaliacoes.length >= 2 ? (
             <RelatorioComparativo avaliacoes={avaliacoes} />

@@ -43,21 +43,35 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/painel/adm
   ]);
 
   return (
-    <div className="flex min-h-dvh">
-      <aside className="flex w-[236px] shrink-0 flex-col border-r border-line bg-panel px-5 py-6">
-        <div>
-          <p className="font-display text-[20px] text-ink">Método Líder</p>
-          <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-subtle">
-            Painel do consultor
-          </p>
+    <div className="flex min-h-dvh flex-col lg:flex-row">
+      {/* Abaixo de 1024px a sidebar vira uma barra horizontal com scroll,
+          no topo — sem drawer/JS, mas resolve o corte que existia antes
+          (sidebar fixa de 236px comendo a tela toda no celular). */}
+      <aside className="flex shrink-0 flex-col border-b border-line bg-panel px-5 py-4 lg:w-[236px] lg:border-r lg:border-b-0 lg:py-6">
+        <div className="flex items-center justify-between lg:block">
+          <div>
+            <p className="font-display text-[18px] text-ink lg:text-[20px]">Método Líder</p>
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-subtle lg:text-[11px]">
+              Painel do consultor
+            </p>
+          </div>
+          <div className="flex items-center gap-2 lg:mt-auto lg:border-t lg:border-line lg:pt-4">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent text-[11px] text-accent lg:h-8 lg:w-8 lg:text-[12px]">
+              {session.user.name?.charAt(0).toUpperCase()}
+            </div>
+            <div className="hidden min-w-0 lg:block">
+              <p className="truncate text-[13px] text-ink">{session.user.name}</p>
+              <p className="text-[11px] text-ink-faint">Consultor</p>
+            </div>
+          </div>
         </div>
 
-        <nav className="mt-8 flex flex-col gap-0.5">
+        <nav className="mt-4 flex gap-1 overflow-x-auto lg:mt-8 lg:flex-col lg:gap-0.5 lg:overflow-visible">
           {ITENS_SIDEBAR.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center justify-between rounded-[2px] px-3 py-2.5 text-[13px] text-ink-soft hover:text-ink"
+              className="flex shrink-0 items-center justify-between gap-1.5 whitespace-nowrap rounded-[2px] px-3 py-2 text-[12px] text-ink-soft hover:text-ink lg:py-2.5 lg:text-[13px]"
             >
               {item.rotulo}
               {item.href === "/painel/admin/alunos" && totalAlunos > 0 && (
@@ -72,31 +86,23 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/painel/adm
           ))}
         </nav>
 
-        <p className="mt-6 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-faint">Outros</p>
-        <nav className="mt-1 flex flex-col gap-0.5">
+        <p className="mt-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-faint lg:mt-6">
+          Outros
+        </p>
+        <nav className="mt-1 flex gap-1 overflow-x-auto lg:flex-col lg:gap-0.5 lg:overflow-visible">
           {ITENS_SIDEBAR_OUTROS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-[2px] px-3 py-2 text-[12px] text-ink-faint hover:text-ink-soft"
+              className="shrink-0 whitespace-nowrap rounded-[2px] px-3 py-2 text-[12px] text-ink-faint hover:text-ink-soft"
             >
               {item.rotulo}
             </Link>
           ))}
         </nav>
-
-        <div className="mt-auto flex items-center gap-2.5 border-t border-line pt-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent text-[12px] text-accent">
-            {session.user.name?.charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-[13px] text-ink">{session.user.name}</p>
-            <p className="text-[11px] text-ink-faint">Consultor</p>
-          </div>
-        </div>
       </aside>
 
-      <div className="min-w-0 flex-1 overflow-x-auto px-9 py-9">{children}</div>
+      <div className="min-w-0 flex-1 overflow-x-auto px-5 py-6 lg:px-9 lg:py-9">{children}</div>
     </div>
   );
 }

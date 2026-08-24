@@ -100,17 +100,17 @@ export default async function PaginaAdminVisaoDoDia() {
       <p className="text-[12px] text-ink-soft">
         {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
       </p>
-      <div className="mt-1 flex items-center justify-between">
-        <h1 className="font-display text-[34px] text-ink">Quem precisa da sua atenção hoje</h1>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-display text-[26px] text-ink lg:text-[34px]">Quem precisa da sua atenção hoje</h1>
         <Link
           href="/painel/admin/mensagens/novo"
-          className="rounded-[2px] bg-accent px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-accent-ink hover:bg-accent-hover"
+          className="shrink-0 rounded-[2px] bg-accent px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-accent-ink hover:bg-accent-hover"
         >
           Publicar mentalidade
         </Link>
       </div>
 
-      <div className="mt-8 grid grid-cols-4 gap-4">
+      <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <CartaoTriagem titulo="Sem treino há 3+ dias" valor={semTreinoCount} cor="var(--color-warn)" />
         <CartaoTriagem titulo="Check-ins a responder" valor={checkinsAResponder} />
         <CartaoTriagem titulo="Revisão recomendada" valor={fichasRevisao} />

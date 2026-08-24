@@ -50,7 +50,7 @@ export default async function PaginaAdminNutricaoAluno({
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">{aluno.nome.toUpperCase()}</p>
       <h1 className="font-display mt-1 text-[30px] text-ink">Plano alimentar</h1>
 
-      <div className="mt-6 grid grid-cols-[1fr_340px] gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         <div className="overflow-hidden rounded-[4px] border border-line">
           <table className="w-full border-collapse text-left">
             <thead>
