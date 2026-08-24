@@ -30,6 +30,8 @@ Mentorado" — é o cliente B2B da mentoria), `ADMIN` (o Victor).
   verdade via PreApproval; Pix/débito pagam ciclo a ciclo).
 - **Vimeo** — hospedagem de vídeo, link privado (`?h=`) pra controle de acesso.
 - **Resend** — envio de e-mail (recuperação de senha).
+- **Cloudinary** (plano gratuito) — fotos de progresso, avatar e imagens
+  de anatomia dos exercícios.
 - **Render** — hospedagem do app.
 
 ## Onde tudo está hospedado
@@ -41,6 +43,7 @@ Mentorado" — é o cliente B2B da mentoria), `ADMIN` (o Victor).
 | App no ar | victorcarvalhopersonal.onrender.com | O app em produção |
 | Neon | console.neon.tech | Banco de dados |
 | Resend | resend.com | E-mail |
+| Cloudinary | cloudinary.com | Fotos e imagens (plano gratuito) |
 | Mercado Pago | mercadopago.com.br/developers/panel | Pagamentos (credenciais pendentes do Victor) |
 
 ## Fases concluídas (1 a 11)
@@ -60,16 +63,43 @@ Mentorado" — é o cliente B2B da mentoria), `ADMIN` (o Victor).
 
 Mais 5 melhorias aprovadas depois da Fase 10 (log de admin, horário em
 lote, cancelar/trocar plano, exportação/exclusão LGPD) e acesso cortesia
-(VIP/teste sem pagamento).
+(VIP/teste sem pagamento). Trocar senha e recuperar senha por e-mail
+(Resend) também prontos.
 
-## Em andamento agora
+## Fase 12 — Método Líder (concluída, ainda não subida pro Render)
 
-- **Trocar senha** e **recuperar senha** (por e-mail, via Resend) — o
-  modelo `TokenRecuperacaoSenha` já está migrado no banco.
+Redesenho completo seguindo o handoff de design (`design_handoff_metodo_lider/`)
+— tema escuro fixo, Instrument Serif + Manrope — e as novas funcionalidades
+do documento de regras de negócio do Victor:
+
+- **App do aluno** (bottom nav): dashboard "Hoje", anamnese/onboarding,
+  execução de treino com histórico de carga por série (referência "Antes"),
+  nutrição com check-in por refeição, evolução (progressão de carga, peso,
+  medidas, fotos via Cloudinary), mensagens (chat texto com o admin).
+- **Painel do admin** (sidebar): Visão do dia (triagem — sem treino há 3+
+  dias, check-ins a responder, revisão recomendada, aderência média), ficha
+  do aluno com relatório comparativo entre avaliações e card de alerta de
+  lesão (da anamnese), gestão de plano alimentar por aluno, conversas,
+  mentalidade do dia reestilizada. Todas as telas antigas (planos, vídeos,
+  exercícios, horários, conteúdo da mentoria, logs) continuam funcionando,
+  só herdaram os tokens visuais novos.
+- Schema novo: `Anamnese`, `Avaliacao`, `ExecucaoExercicio`,
+  `PlanoNutricional`/`Refeicao`/`CheckinNutricional`, `FotoProgresso`,
+  `Mensagem`, campos de anatomia no `Exercicio`, `avatarUrl` no `Usuario`.
+- Escopo deixado de fora de propósito: mensagens por áudio (só texto),
+  "Fase Inteligência" (dashboard agregado — adiada até ter uso real
+  acumulado), Health Check de infra (fase separada, ainda não feita).
+
+Testado ponta a ponta no navegador (login → anamnese → ficha pelo admin →
+execução pelo aluno → avaliação comparativa → visão do dia) antes de
+qualquer commit. Dois bugs reais de fuso horário encontrados e corrigidos
+nesse processo (ver `git log`).
 
 ## Pendente
 
 - Credenciais de teste do Mercado Pago (o Dennis pediu pro Victor)
+- Health Check de infra (endpoint + Render Cron Job) — combinado, ainda
+  não feito
 - Guia de estudo / apresentação / material de venda pro Victor / sugestão
   de precificação — combinado fazer depois que o Mercado Pago também
   estiver resolvido, mas sem bloquear o resto por causa disso
