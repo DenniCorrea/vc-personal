@@ -82,6 +82,23 @@ enum StatusPagamento {
   ESTORNADO
 }
 
+// Os 5 pilares da mentoria (secao 3 do briefing do Victor). Enum fixo por
+// enquanto — o briefing ja avisa que isso deve virar configuravel pelo admin
+// "futuramente", entao comecamos simples e migramos pra tabela se um dia
+// isso virar necessidade real.
+enum Pilar {
+  POSICIONAMENTO
+  ABORDAGEM
+  MAPEAMENTO
+  VENDAS
+  FIDELIZACAO
+}
+
+enum TipoConteudo {
+  PADRAO // sempre disponivel pra quem assina
+  SEMANAL // o "1 video novo por semana" do briefing
+}
+
 // ---------------------------------------------------------------------------
 // Modelos
 // ---------------------------------------------------------------------------
@@ -329,6 +346,7 @@ model Video {
   criadoEm DateTime @default(now())
 
   exerciciosVinculados Exercicio[]
+  conteudosVinculados  ConteudoConsultoria[]
 
   @@map("videos")
 }
@@ -397,4 +415,28 @@ model TreinoExercicio {
   observacoes String?
 
   @@map("treino_exercicios")
+}
+
+// Conteudo da mentoria — acesso por PRODUTO (igual Video), nao por dono:
+// todo mentorado com assinatura MENTORIA ativa ve o mesmo catalogo.
+// `publicadoEm` no futuro = o admin agenda o video da semana com
+// antecedencia e ele "destrava" sozinho na data certa, sem precisar logar
+// toda semana pra publicar.
+model ConteudoConsultoria {
+  id String @id @default(uuid())
+
+  pilar Pilar
+  tipo  TipoConteudo @default(PADRAO)
+
+  titulo    String
+  descricao String?
+
+  video   Video?  @relation(fields: [videoId], references: [id])
+  videoId String?
+
+  publicadoEm DateTime @default(now())
+  ativo       Boolean  @default(true)
+  criadoEm    DateTime @default(now())
+
+  @@map("conteudos_consultoria")
 }
