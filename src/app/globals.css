@@ -1,48 +1,60 @@
 @import "tailwindcss";
 
-/* Paleta "Victor Carvalho Personal" — a mesma usada no blueprint da Etapa 1, agora como
-   tokens reais. Definida uma vez aqui, todas as paginas usam via classes
-   Tailwind (bg-paper, text-ink, text-accent...) em vez de cor solta. */
+/* Paleta "Metodo Lider" (design_handoff_metodo_lider/README.md) — tema escuro
+   fixo, sem variante clara: as fotos e o posicionamento premium do Victor sao
+   pensados pra esse fundo grafite quente. Nomes mantidos como bg/paper/ink por
+   compatibilidade com o resto do app, mas os VALORES agora sao os do handoff. */
 :root {
-  --color-paper: #f7f4ec;
-  --color-paper-raised: #ffffff;
-  --color-ink: #211d18;
-  --color-ink-soft: #5b564c;
-  --color-line: #e4dfd1;
-  --color-accent: #a8672a;
-  --color-accent-ink: #ffffff;
-  --color-warn: #9c3b2e;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-paper: #17140f;
-    --color-paper-raised: #201c16;
-    --color-ink: #f3efe6;
-    --color-ink-soft: #b8b0a2;
-    --color-line: #39332a;
-    --color-accent: #d99a4e;
-    --color-accent-ink: #1b1200;
-    --color-warn: #e08a72;
-  }
+  --color-paper: #0e0d0c; /* bg/base */
+  --color-paper-raised: #100f0d; /* bg/surface */
+  --color-panel: #131210; /* bg/panel — sidebar admin, tabelas */
+  --color-card: #161412; /* bg/card mobile */
+  --color-card-admin: #151311; /* bg/card admin */
+  --color-input: #0f0e0c;
+  --color-ink: #f6f3ee; /* text/primary */
+  --color-ink-body: #f4f1ec; /* text/body */
+  --color-ink-soft: rgba(237, 233, 227, 0.55); /* text/muted */
+  --color-ink-subtle: rgba(237, 233, 227, 0.45); /* text/subtle (rotulos) */
+  --color-ink-faint: rgba(237, 233, 227, 0.35); /* text/faint (placeholder) */
+  --color-line: rgba(237, 233, 227, 0.12); /* border/hairline */
+  --color-accent: #c9a87c;
+  --color-accent-hover: #e0c79e;
+  --color-accent-ink: #14120f; /* texto sobre botao accent solido */
+  --color-accent-wash: rgba(201, 168, 124, 0.1);
+  --color-accent-border: rgba(201, 168, 124, 0.4);
+  --color-warn: #c0483b; /* alert — musculo em destaque, risco, erro */
+  --color-warn-wash: rgba(192, 72, 59, 0.07);
 }
 
 @theme inline {
   --color-paper: var(--color-paper);
   --color-paper-raised: var(--color-paper-raised);
+  --color-panel: var(--color-panel);
+  --color-card: var(--color-card);
+  --color-card-admin: var(--color-card-admin);
+  --color-input: var(--color-input);
   --color-ink: var(--color-ink);
+  --color-ink-body: var(--color-ink-body);
   --color-ink-soft: var(--color-ink-soft);
+  --color-ink-subtle: var(--color-ink-subtle);
+  --color-ink-faint: var(--color-ink-faint);
   --color-line: var(--color-line);
   --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
   --color-accent-ink: var(--color-accent-ink);
+  --color-accent-wash: var(--color-accent-wash);
+  --color-accent-border: var(--color-accent-border);
   --color-warn: var(--color-warn);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-barlow-condensed);
+  --color-warn-wash: var(--color-warn-wash);
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-instrument-serif);
 }
 
 body {
   background: var(--color-paper);
-  color: var(--color-ink);
+  color: var(--color-ink-body);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Raio: 2px em botao/input/chip/badge, 4px em card/tabela, 6px em containers
+   maiores, 50% em avatar — nunca cantos muito arredondados (regra do handoff). */

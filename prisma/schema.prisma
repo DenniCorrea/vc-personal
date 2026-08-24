@@ -122,6 +122,27 @@ enum TipoAlerta {
   SOLICITACAO_EXCLUSAO // pro ADMIN: pessoa pediu exclusao da conta (LGPD)
 }
 
+// Secao "objetivo principal" da anamnese (handoff Metodo Lider, tela 3a).
+enum ObjetivoAluno {
+  HIPERTROFIA
+  EMAGRECIMENTO
+  SAUDE_CONSTANCIA
+  PERFORMANCE
+}
+
+enum TempoTreino {
+  NUNCA_TREINOU
+  UM_A_TRES_ANOS
+  MAIS_DE_TRES_ANOS
+}
+
+// Resultado do check-in de uma refeicao especifica num dia especifico
+// (secao 8 do briefing + tela 2b do handoff).
+enum StatusCheckinNutricional {
+  SEGUIU
+  ADAPTOU
+}
+
 // ---------------------------------------------------------------------------
 // Modelos
 // ---------------------------------------------------------------------------
@@ -146,6 +167,10 @@ model Usuario {
   endereco            String?
   consentimentoLgpdEm DateTime?
 
+  // URL da foto no Cloudinary (plano gratuito) — null enquanto a pessoa nao
+  // envia uma. Usado no avatar do dashboard e no header do painel do admin.
+  avatarUrl String?
+
   role Role @default(ALUNO)
 
   // Soft delete: "desligar" o usuario sem apagar o historico de pagamento e
@@ -168,6 +193,20 @@ model Usuario {
   assinaturasConcedidas Assinatura[]            @relation("AssinaturasConcedidas")
   logsAdmin             LogAdmin[]
   tokensRecuperacao     TokenRecuperacaoSenha[]
+
+  // --- Metodo Lider (Fase 12) ---
+  anamnese          Anamnese?
+  avaliacoes        Avaliacao[]
+  execucoes         ExecucaoExercicio[]
+  planoNutricional  PlanoNutricional?
+  fotosProgresso    FotoProgresso[]
+  // Mensagens onde esse usuario e o "dono" da conversa (sempre o aluno —
+  // como so existe 1 admin, a thread inteira e identificada so por isso,
+  // sem precisar de uma tabela Conversa separada).
+  mensagens         Mensagem[]          @relation("ThreadDoAluno")
+  // Mensagens que ESSE usuario escreveu dentro de alguma thread (aluno
+  // escrevendo na propria, ou o admin respondendo a de um aluno).
+  mensagensEnviadas Mensagem[]          @relation("AutorMensagem")
 
   @@map("usuarios")
 }
@@ -402,6 +441,14 @@ model Exercicio {
   instrucoes String?
   cuidados   String?
 
+  // Imagens estaticas padrao (as mesmas que aparecem nos aparelhos/na
+  // internet) — nao e arte custom por exercicio. `imagemAnatomica` e o
+  // caminho de um preset fixo (grupo muscular), escolhido pelo admin numa
+  // lista, nao um upload novo por exercicio.
+  grupoMuscularPrincipal      String?
+  gruposMuscularesSecundarios String[]
+  imagemAnatomica             String?
+
   video   Video?  @relation(fields: [videoId], references: [id])
   videoId String?
 
@@ -409,6 +456,7 @@ model Exercicio {
   criadoEm DateTime @default(now())
 
   prescricoes TreinoExercicio[]
+  execucoes   ExecucaoExercicio[]
 
   @@map("exercicios")
 }
@@ -595,4 +643,191 @@ model TokenRecuperacaoSenha {
   criadoEm DateTime @default(now())
 
   @@map("tokens_recuperacao_senha")
+}
+
+// ---------------------------------------------------------------------------
+// Metodo Lider (Fase 12) — historico de execucao, avaliacoes, nutricao,
+// anamnese, fotos e mensagens. Ver design_handoff_metodo_lider/README.md
+// pras telas que consomem cada um desses modelos.
+// ---------------------------------------------------------------------------
+
+// Respostas do onboarding (handoff, tela 3a). Uma por usuario — se precisar
+// atualizar (aluno mudou de objetivo, nova lesao), o admin edita os campos
+// direto, nao criamos historico disso (diferente da Avaliacao, que E
+// historico por definicao).
+model Anamnese {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String  @unique
+
+  tempoTreino      TempoTreino
+  diasDisponiveis  Int // 1 a 7 (validado na aplicacao)
+  objetivo         ObjetivoAluno
+  lesoesRestricoes String? // texto livre — vira o card "ATENÇÃO" na tela do aluno pro admin
+
+  respondidoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("anamneses")
+}
+
+// Uma avaliacao fisica (peso, medidas, % gordura) num ponto no tempo.
+// NUNCA sobrescreve a anterior — o valor do produto e justamente comparar
+// duas linhas (inicial vs. 30/60/90 dias) pra gerar o relatorio que o
+// Victor usa pra decidir o que ajustar no aluno.
+model Avaliacao {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  data                    DateTime @db.Date
+  peso                    Float? // kg
+  altura                  Float? // cm
+  percentualGordura       Float?
+  // Circunferencias e outras medidas: guardado como JSON (ex: {"cintura":
+  // 92, "bracoDireito": 34}) porque o briefing pede "outras medidas
+  // relevantes" sem fechar a lista — um campo fixo por medida exigiria
+  // migration toda vez que o Victor quisesse medir algo novo. Validado por
+  // zod na camada de aplicacao, nao pelo banco.
+  medidas                 Json?
+  observacoesNutricionais String?
+
+  criadoEm DateTime @default(now())
+
+  @@map("avaliacoes")
+}
+
+// UMA serie executada, de UM exercicio, num treino. Vinculado a Usuario +
+// Exercicio diretamente (nao a TreinoExercicio/prescricao) — assim "ultima
+// vez que fiz supino reto" continua funcionando mesmo depois que o admin
+// reescreve a ficha. `numeroSerie` + unique em (usuario, exercicio, data,
+// numeroSerie) permite salvar cada serie conforme o aluno registra (o
+// design pede salvamento otimista por serie) sem duplicar linha se ele
+// corrigir um valor.
+model ExecucaoExercicio {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  exercicio   Exercicio @relation(fields: [exercicioId], references: [id])
+  exercicioId String
+
+  data        DateTime @db.Date
+  numeroSerie Int
+  carga       Float?
+  repeticoes  Int?
+  observacoes String?
+
+  criadoEm DateTime @default(now())
+
+  @@unique([usuarioId, exercicioId, data, numeroSerie])
+  @@map("execucoes_exercicio")
+}
+
+// O plano alimentar de UM aluno — so existe pra quem tem `incluiNutricao`
+// no plano contratado. Um por aluno (o admin edita em cima do mesmo plano
+// em vez de criar um novo toda semana — o handoff mostra "Plano alimentar
+// · semana 6" como rotulo de acompanhamento, nao como um plano diferente
+// a cada semana).
+model PlanoNutricional {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String  @unique
+
+  metaAguaLitros Float?
+  metaSonoHoras  Float?
+  metaProteinaG  Float?
+
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  refeicoes Refeicao[]
+
+  @@map("planos_nutricionais")
+}
+
+// Uma refeicao dentro do plano (Cafe da manha, Almoco...). `composicao` e
+// texto livre de proposito — mesma logica do TreinoExercicio: e uma forma
+// real de descrever "3 ovos - 60g aveia - 1 banana" que colunas fixas nao
+// capturariam bem, e o briefing probe o app de nao inventar/prescrever
+// nutricao automaticamente, entao nao ha ganho em modelar alimento como
+// entidade relacional separada.
+model Refeicao {
+  id String @id @default(uuid())
+
+  planoNutricional   PlanoNutricional @relation(fields: [planoNutricionalId], references: [id], onDelete: Cascade)
+  planoNutricionalId String
+
+  nome       String // "Cafe da manha", "Almoco"...
+  horario    String? // "07:30"
+  composicao String
+  kcal       Int?
+  ordem      Int
+
+  checkins CheckinNutricional[]
+
+  @@map("refeicoes")
+}
+
+// O check-in de UMA refeicao num dia especifico. Unique em (refeicao,
+// data) — igual HabitoRegistro, registrar de novo no mesmo dia atualiza,
+// nao duplica.
+model CheckinNutricional {
+  id String @id @default(uuid())
+
+  refeicao   Refeicao @relation(fields: [refeicaoId], references: [id], onDelete: Cascade)
+  refeicaoId String
+
+  data                DateTime                 @db.Date
+  status              StatusCheckinNutricional
+  observacaoAdaptacao String? // preenchido so quando status = ADAPTOU
+
+  criadoEm DateTime @default(now())
+
+  @@unique([refeicaoId, data])
+  @@map("checkins_nutricionais")
+}
+
+// Foto de acompanhamento (handoff, tela 7 "Evolucao"). Guardada no
+// Cloudinary (plano gratuito) — aqui so a URL e a legenda.
+model FotoProgresso {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  url     String
+  legenda String? // ex: "semana 1 - frente"
+
+  criadoEm DateTime @default(now())
+
+  @@map("fotos_progresso")
+}
+
+// Mensagem de chat entre um aluno e o admin. `usuarioId` identifica DE QUEM
+// e a thread (sempre o aluno) — como so existe 1 admin (decisao ja tomada
+// no projeto), a thread inteira e "usuario X conversando com o Victor", sem
+// precisar de uma tabela Conversa/participantes. `autorId` diz quem
+// escreveu essa mensagem especifica dentro da thread (o proprio aluno ou o
+// admin respondendo).
+model Mensagem {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation("ThreadDoAluno", fields: [usuarioId], references: [id])
+  usuarioId String
+
+  autor   Usuario @relation("AutorMensagem", fields: [autorId], references: [id])
+  autorId String
+
+  texto String
+  lida  Boolean @default(false)
+
+  criadoEm DateTime @default(now())
+
+  @@map("mensagens")
 }

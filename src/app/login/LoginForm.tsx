@@ -13,58 +13,49 @@ export function LoginForm() {
   const callbackUrl = searchParams.get("callbackUrl") ?? "/painel";
 
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-        Victor Carvalho Personal
-      </p>
-      <h1 className="mt-1 font-display text-3xl font-semibold text-ink">Entrar</h1>
+    <form action={formAction} className="mt-8 flex flex-col gap-5">
+      <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
-      <form action={formAction} className="mt-8 flex flex-col gap-4">
-        <input type="hidden" name="callbackUrl" value={callbackUrl} />
+      <label className="flex flex-col gap-2 text-[15px] text-ink">
+        E-mail
+        <input
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          className="border-0 border-b border-line bg-transparent px-0 py-2.5 text-ink outline-none focus:border-accent"
+        />
+      </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-          E-mail
-          <input
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
-          />
-        </label>
+      <label className="flex flex-col gap-2 text-[15px] text-ink">
+        Senha
+        <input
+          name="senha"
+          type="password"
+          autoComplete="current-password"
+          required
+          className="border-0 border-b border-line bg-transparent px-0 py-2.5 text-ink outline-none focus:border-accent"
+        />
+      </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-          Senha
-          <input
-            name="senha"
-            type="password"
-            autoComplete="current-password"
-            required
-            className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
-          />
-        </label>
+      {estado.erro && <p className="text-xs text-warn">{estado.erro}</p>}
 
-        {estado.erro && <p className="text-sm text-warn">{estado.erro}</p>}
+      <button
+        type="submit"
+        disabled={pendente}
+        className="mt-3 rounded-[2px] bg-accent px-5 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-accent-ink transition-colors hover:bg-accent-hover disabled:opacity-60"
+      >
+        {pendente ? "Entrando..." : "Entrar"}
+      </button>
 
-        <button
-          type="submit"
-          disabled={pendente}
-          className="mt-2 rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink disabled:opacity-60"
-        >
-          {pendente ? "Entrando..." : "Entrar"}
-        </button>
-
-        <Link href="/esqueci-senha" className="text-sm text-ink-soft hover:text-ink">
+      <div className="mt-2 flex items-center justify-between text-[13px] text-ink-soft">
+        <Link href="/esqueci-senha" className="hover:text-ink">
           Esqueci minha senha
         </Link>
-      </form>
-
-      <p className="mt-6 text-sm text-ink-soft">
-        Ainda não tem conta?{" "}
-        <Link href="/cadastro" className="font-medium text-accent">
-          Cadastre-se
+        <Link href="/cadastro" className="hover:text-ink">
+          Primeiro acesso? Cadastre-se
         </Link>
-      </p>
-    </main>
+      </div>
+    </form>
   );
 }
