@@ -10,8 +10,18 @@ const DIAS_SEMANA = ["DOMINGO", "SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA"
 export async function DashboardAluno({ usuarioId, nome }: { usuarioId: string; nome: string }) {
   const hoje = hojeData();
 
-  const [mensagem, assinatura, treinos, habitoAgua, habitoSono, planoNutricional, recado, avatarUrl, anamnese] =
-    await Promise.all([
+  const [
+    mensagem,
+    assinatura,
+    treinos,
+    habitoAgua,
+    habitoSono,
+    planoNutricional,
+    recado,
+    avatarUrl,
+    anamnese,
+    alertasNaoLidos,
+  ] = await Promise.all([
       prisma.mensagemMentalidade.findFirst({
         where: { ativo: true, publicadoEm: { lte: new Date() } },
         orderBy: { publicadoEm: "desc" },
@@ -43,6 +53,7 @@ export async function DashboardAluno({ usuarioId, nome }: { usuarioId: string; n
       }),
       prisma.usuario.findUnique({ where: { id: usuarioId }, select: { avatarUrl: true } }),
       prisma.anamnese.findUnique({ where: { usuarioId }, select: { id: true } }),
+      prisma.alerta.count({ where: { usuarioId, lido: false } }),
     ]);
 
   // "Treino de hoje" = o primeiro treino ativo que a pessoa ainda nao fez
@@ -77,20 +88,36 @@ export async function DashboardAluno({ usuarioId, nome }: { usuarioId: string; n
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">{diaSemana}</p>
           <h1 className="font-display mt-1 text-[30px] leading-tight text-ink">Bom dia, {nome.split(" ")[0]}</h1>
         </div>
-        <Link href="/painel/dados" className="shrink-0">
-          {avatarUrl?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={avatarUrl.avatarUrl}
-              alt=""
-              className="h-10 w-10 rounded-full border border-accent object-cover"
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-accent text-sm text-accent">
-              {nome.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </Link>
+        <div className="flex shrink-0 items-center gap-3">
+          <Link href="/painel/alertas" className="relative" aria-label="Alertas">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ink-soft">
+              <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" />
+              <path d="M9.5 19a2.5 2.5 0 0 0 5 0" />
+            </svg>
+            {alertasNaoLidos > 0 && (
+              <span
+                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-semibold text-accent-ink"
+                style={{ background: "var(--color-warn)" }}
+              >
+                {alertasNaoLidos}
+              </span>
+            )}
+          </Link>
+          <Link href="/painel/dados">
+            {avatarUrl?.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl.avatarUrl}
+                alt=""
+                className="h-10 w-10 rounded-full border border-accent object-cover"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-accent text-sm text-accent">
+                {nome.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </Link>
+        </div>
       </div>
 
       {!anamnese && (
@@ -144,6 +171,17 @@ export async function DashboardAluno({ usuarioId, nome }: { usuarioId: string; n
             Ver planos disponíveis
           </Link>
         </section>
+      )}
+
+      {assinatura && (
+        <div className="mt-4 flex gap-4 px-1">
+          <Link href="/painel/agenda" className="text-[12px] font-medium text-accent">
+            Ver agenda
+          </Link>
+          <Link href="/painel/videos" className="text-[12px] font-medium text-accent">
+            Ver vídeos
+          </Link>
+        </div>
       )}
 
       {(habitoAgua || habitoSono) && (

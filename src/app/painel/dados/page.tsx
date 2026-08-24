@@ -19,6 +19,23 @@ export default async function PaginaMeusDados() {
       </p>
       <h1 className="mt-1 font-display text-3xl font-semibold text-ink">Seus dados</h1>
 
+      {session.user.role !== "ADMIN" && (
+        <div className="mt-4 flex flex-wrap gap-4">
+          <Link href="/painel/agenda" className="text-sm font-medium text-accent">
+            Agenda
+          </Link>
+          <Link href="/painel/videos" className="text-sm font-medium text-accent">
+            Vídeos
+          </Link>
+          <Link href="/painel/alertas" className="text-sm font-medium text-accent">
+            Alertas
+          </Link>
+          <Link href="/painel/habitos" className="text-sm font-medium text-accent">
+            Água, sono e mentalidade
+          </Link>
+        </div>
+      )}
+
       <div className="mt-6 flex items-center gap-4 rounded-lg border border-line bg-paper-raised p-4">
         {usuario?.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
