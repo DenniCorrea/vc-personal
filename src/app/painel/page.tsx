@@ -83,6 +83,12 @@ export default async function PaginaPainel() {
           >
             Gerenciar conteúdo da mentoria
           </Link>
+          <Link
+            href="/painel/admin/mensagens"
+            className="inline-block rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+          >
+            Gerenciar mensagens
+          </Link>
         </div>
       )}
 
@@ -123,6 +129,14 @@ export default async function PaginaPainel() {
               </Link>
             </>
           )}
+        </div>
+      )}
+
+      {session.user.role !== "ADMIN" && (
+        <div className="mt-4">
+          <Link href="/painel/habitos" className="text-sm font-medium text-accent">
+            Água, sono e mentalidade
+          </Link>
         </div>
       )}
 

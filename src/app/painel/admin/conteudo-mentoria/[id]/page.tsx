@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { paraInputDate } from "@/lib/data";
 import { salvarConteudo } from "../actions";
 
 const PILARES = [
@@ -10,10 +11,6 @@ const PILARES = [
   { valor: "VENDAS", rotulo: "Vendas" },
   { valor: "FIDELIZACAO", rotulo: "Fidelização" },
 ] as const;
-
-function paraInputDate(data: Date): string {
-  return data.toISOString().slice(0, 10);
-}
 
 export default async function PaginaConteudoMentoria({
   params,

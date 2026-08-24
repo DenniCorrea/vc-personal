@@ -99,6 +99,19 @@ enum TipoConteudo {
   SEMANAL // o "1 video novo por semana" do briefing
 }
 
+// So agua e sono por enquanto. Enum de novo, mesmo raciocinio do Pilar: o
+// briefing pede pra "permitir adicionar novos habitos futuramente", e um
+// enum novo e barato de migrar quando isso virar necessidade real.
+enum TipoHabito {
+  AGUA
+  SONO
+}
+
+enum FrequenciaMensagem {
+  DIARIA
+  SEMANAL
+}
+
 // ---------------------------------------------------------------------------
 // Modelos
 // ---------------------------------------------------------------------------
@@ -138,6 +151,7 @@ model Usuario {
   agendamentos Agendamento[]
   pagamentos   Pagamento[]
   treinos      Treino[]
+  habitos      Habito[]
 
   @@map("usuarios")
 }
@@ -439,4 +453,62 @@ model ConteudoConsultoria {
   criadoEm    DateTime @default(now())
 
   @@map("conteudos_consultoria")
+}
+
+// A META de um usuario pra um tipo de habito. So uma por usuario+tipo — nao
+// faz sentido ter 2 metas de agua ativas ao mesmo tempo pra mesma pessoa.
+model Habito {
+  id String @id @default(uuid())
+
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+  tipo      TipoHabito
+
+  metaValor Float // litros (agua) ou horas (sono)
+
+  // So a PREFERENCIA guardada aqui — quem efetivamente dispara o lembrete
+  // (e-mail, push...) e a Fase 10 (Alertas), que le esses dois campos.
+  lembreteHorario String? // "07:00"
+  lembreteAtivo   Boolean @default(true)
+
+  criadoEm DateTime @default(now())
+
+  registros HabitoRegistro[]
+
+  @@unique([usuarioId, tipo])
+  @@map("habitos")
+}
+
+// O valor registrado em UM dia. Unique em (habito, data) — registrar de novo
+// no mesmo dia ATUALIZA o valor, nao cria uma segunda linha duplicada.
+model HabitoRegistro {
+  id String @id @default(uuid())
+
+  habito   Habito @relation(fields: [habitoId], references: [id], onDelete: Cascade)
+  habitoId String
+
+  data  DateTime @db.Date
+  valor Float
+
+  criadoEm DateTime @default(now())
+
+  @@unique([habitoId, data])
+  @@map("habito_registros")
+}
+
+// Mensagem motivacional/orientacao — mesmo mecanismo de agendamento do
+// ConteudoConsultoria (Fase 8): `publicadoEm` no futuro fica invisivel ate
+// a data chegar. So existe UMA mensagem "vigente" por vez — a mais recente
+// cujo publicadoEm ja passou.
+model MensagemMentalidade {
+  id String @id @default(uuid())
+
+  texto      String
+  frequencia FrequenciaMensagem @default(DIARIA)
+
+  publicadoEm DateTime @default(now())
+  ativo       Boolean  @default(true)
+  criadoEm    DateTime @default(now())
+
+  @@map("mensagens_mentalidade")
 }
