@@ -69,6 +69,19 @@ enum StatusAgendamento {
   FALTOU
 }
 
+enum MetodoPagamento {
+  CARTAO
+  DEBITO
+  PIX
+}
+
+enum StatusPagamento {
+  PENDENTE
+  APROVADO
+  RECUSADO
+  ESTORNADO
+}
+
 // ---------------------------------------------------------------------------
 // Modelos
 // ---------------------------------------------------------------------------
@@ -106,6 +119,7 @@ model Usuario {
 
   assinaturas  Assinatura[]
   agendamentos Agendamento[]
+  pagamentos   Pagamento[]
 
   @@map("usuarios")
 }
@@ -128,6 +142,12 @@ model Plano {
   // R$ 19,999999999 em vez de R$ 20,00. Decimal(10,2) guarda exatamente 2 casas.
   preco         Decimal       @db.Decimal(10, 2)
   periodicidade Periodicidade @default(MENSAL)
+
+  // Preco de UMA sessao avulsa (quando estoura o limite semanal). Campo
+  // explicito, definido pelo admin — nao e uma fracao calculada do `preco`
+  // mensal, porque essa conta (quantas sessoes "cabem" no preco do plano)
+  // e uma decisao de negocio, nao aritmetica.
+  precoAvulso Decimal? @db.Decimal(10, 2)
 
   // `limiteAgendamentos` vale pros dois produtos (quantas sessoes o ciclo
   // semanal cobre — aluno E mentoria tem essa trava, confirmado com o
@@ -171,10 +191,18 @@ model Assinatura {
   dataProximaRenovacao DateTime
   renovacaoAutomatica  Boolean          @default(true)
 
+  // Preenchido so quando o pagamento e por cartao: e o id da assinatura
+  // recorrente (PreApproval) no Mercado Pago, que cobra sozinha todo mes.
+  // Pix e debito ficam null aqui — cada ciclo deles gera um Pagamento novo
+  // em vez de uma cobranca automatica (o Mercado Pago nao suporta
+  // recorrencia confiavel pra esses dois metodos).
+  mercadoPagoPreapprovalId String? @unique
+
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
   agendamentos Agendamento[]
+  pagamentos   Pagamento[]
 
   @@map("assinaturas")
 }
@@ -233,5 +261,45 @@ model Agendamento {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
+  pagamentos Pagamento[]
+
   @@map("agendamentos")
+}
+
+// Um cobranca real, processada pelo Mercado Pago. Cada Pagamento e ou uma
+// mensalidade (assinatura) ou uma sessao avulsa (agendamento) — nunca as
+// duas, mas ao contrario do Plano/Produto, aqui nao da pra unificar num
+// campo so: sao coisas diferentes sendo cobradas, nao duas variantes da
+// mesma coisa.
+model Pagamento {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  assinatura   Assinatura? @relation(fields: [assinaturaId], references: [id])
+  assinaturaId String?
+
+  agendamento   Agendamento? @relation(fields: [agendamentoId], references: [id])
+  agendamentoId String?
+
+  // Decimal, nunca Float — mesma razao do preco do Plano.
+  valorOriginal Decimal @db.Decimal(10, 2)
+  desconto      Decimal @default(0) @db.Decimal(10, 2) // 6% quando o metodo e PIX
+  valorFinal    Decimal @db.Decimal(10, 2)
+
+  metodo MetodoPagamento
+  status StatusPagamento @default(PENDENTE)
+
+  // Criado ANTES da pessoa pagar (e o "carrinho" — Preference pra
+  // pagamento avulso/Pix/debito, PreApproval pra assinatura de cartao).
+  mercadoPagoPreferenceId String? @unique
+  // Só existe DEPOIS que o Mercado Pago confirma o pagamento de verdade —
+  // e o dado que o webhook traz, nunca o que o navegador do cliente informa.
+  mercadoPagoPaymentId    String? @unique
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("pagamentos")
 }

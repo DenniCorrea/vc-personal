@@ -15,6 +15,7 @@ const planoAlunoSchema = z.object({
     .transform((v) => (Array.isArray(v) ? v : [v]))
     .pipe(z.array(z.enum(["VIDEO", "PRESENCIAL", "DISTANCIA"])).min(1)),
   preco: z.coerce.number().positive(),
+  precoAvulso: z.coerce.number().positive().optional(),
   beneficios: z.string().optional(),
 });
 
@@ -22,6 +23,7 @@ const planoMentoriaSchema = z.object({
   nome: z.string().trim().min(2),
   descricao: z.string().trim().min(2),
   preco: z.coerce.number().positive(),
+  precoAvulso: z.coerce.number().positive().optional(),
   beneficios: z.string().optional(),
 });
 
@@ -51,6 +53,7 @@ export async function salvarPlanoAluno(id: string, formData: FormData) {
     incluiNutricao: parsed.data.incluiNutricao === "on",
     tiposAtendimento: parsed.data.tiposAtendimento,
     preco: parsed.data.preco,
+    precoAvulso: parsed.data.precoAvulso ?? null,
     beneficios: linhasParaBeneficios(parsed.data.beneficios),
   };
 
@@ -73,6 +76,7 @@ export async function salvarPlanoMentoria(id: string, formData: FormData) {
     nome: parsed.data.nome,
     descricao: parsed.data.descricao,
     preco: parsed.data.preco,
+    precoAvulso: parsed.data.precoAvulso ?? null,
     beneficios: linhasParaBeneficios(parsed.data.beneficios),
   };
 

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { inicioDaSemana, fimDaSemana } from "@/lib/agenda";
 import { reservarHorario, cancelarAgendamento } from "./actions";
+import { iniciarPagamentoAgendamento } from "../pagamento/actions";
 
 const formatoDataHora = new Intl.DateTimeFormat("pt-BR", {
   weekday: "short",
@@ -63,7 +64,7 @@ export default async function PaginaAgenda() {
         status: { not: "CANCELADO" },
         horario: { inicio: { gte: new Date() } },
       },
-      include: { horario: true },
+      include: { horario: true, pagamentos: true },
       orderBy: { horario: { inicio: "asc" } },
     }),
     prisma.horario.findMany({
@@ -96,36 +97,60 @@ export default async function PaginaAgenda() {
       </h1>
       {excedeuLimite && (
         <p className="mt-2 text-sm text-warn">
-          Limite semanal atingido — a próxima reserva vira uma sessão avulsa (o pagamento ainda
-          não foi implementado, isso entra na Fase 5).
+          Limite semanal atingido — a próxima reserva vira uma sessão avulsa, paga à parte.
         </p>
       )}
 
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold text-ink">Seus próximos horários</h2>
         <ul className="mt-3 flex flex-col gap-2">
-          {meusAgendamentos.map((agendamento) => (
-            <li
-              key={agendamento.id}
-              className="flex items-center justify-between rounded-lg border border-line bg-paper-raised px-4 py-3"
-            >
-              <div>
-                <p className="font-medium text-ink">
-                  {formatoDataHora.format(agendamento.horario.inicio)}
-                  {agendamento.horario.tipoAtendimento &&
-                    ` · ${ROTULO_TIPO[agendamento.horario.tipoAtendimento]}`}
-                  {agendamento.avulso && (
-                    <span className="ml-2 text-xs font-normal text-warn">avulso</span>
+          {meusAgendamentos.map((agendamento) => {
+            const pago = agendamento.pagamentos.some((p) => p.status === "APROVADO");
+            const precisaPagar = agendamento.avulso && !pago;
+            return (
+              <li
+                key={agendamento.id}
+                className="flex flex-col gap-2 rounded-lg border border-line bg-paper-raised px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-medium text-ink">
+                    {formatoDataHora.format(agendamento.horario.inicio)}
+                    {agendamento.horario.tipoAtendimento &&
+                      ` · ${ROTULO_TIPO[agendamento.horario.tipoAtendimento]}`}
+                    {agendamento.avulso && (
+                      <span className="ml-2 text-xs font-normal text-warn">
+                        avulso{precisaPagar ? " · pagamento pendente" : ""}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {precisaPagar && (
+                    <>
+                      <form action={iniciarPagamentoAgendamento.bind(null, agendamento.id, "PIX")}>
+                        <button
+                          type="submit"
+                          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-ink"
+                        >
+                          Pagar com Pix (6% off)
+                        </button>
+                      </form>
+                      <form action={iniciarPagamentoAgendamento.bind(null, agendamento.id, "CARTAO")}>
+                        <button type="submit" className="text-sm text-ink-soft hover:text-ink">
+                          Cartão
+                        </button>
+                      </form>
+                    </>
                   )}
-                </p>
-              </div>
-              <form action={cancelarAgendamento.bind(null, agendamento.id)}>
-                <button type="submit" className="text-sm text-ink-soft hover:text-ink">
-                  Cancelar
-                </button>
-              </form>
-            </li>
-          ))}
+                  <form action={cancelarAgendamento.bind(null, agendamento.id)}>
+                    <button type="submit" className="text-sm text-ink-soft hover:text-ink">
+                      Cancelar
+                    </button>
+                  </form>
+                </div>
+              </li>
+            );
+          })}
           {meusAgendamentos.length === 0 && (
             <p className="text-sm text-ink-soft">Nenhum horário reservado ainda.</p>
           )}

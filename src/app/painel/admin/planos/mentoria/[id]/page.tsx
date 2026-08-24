@@ -63,6 +63,21 @@ export default async function PaginaPlanoMentoria({
         </label>
 
         <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+          Preço da sessão avulsa (R$)
+          <input
+            name="precoAvulso"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={plano?.precoAvulso ? Number(plano.precoAvulso) : undefined}
+            className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+          />
+          <span className="text-xs font-normal text-ink-soft">
+            Cobrado quando o mentorado agenda além do limite semanal do plano.
+          </span>
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
           Benefícios (um por linha)
           <textarea
             name="beneficios"

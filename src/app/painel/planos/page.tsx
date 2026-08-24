@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { assinarPlano } from "./actions";
+import { iniciarPagamentoAssinatura } from "../pagamento/actions";
 import type { Produto } from "@/generated/prisma/enums";
 
 const formatoMoeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -23,11 +24,12 @@ export default async function PaginaPlanos() {
   const session = await exigirPapel("ALUNO", "PERSONAL_PARCEIRO");
 
   const assinaturaAtual = await prisma.assinatura.findFirst({
-    where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA"] } },
+    where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA", "ATRASADA"] } },
     include: { plano: true },
   });
 
   if (assinaturaAtual) {
+    const precisaPagar = assinaturaAtual.status === "PENDENTE" || assinaturaAtual.status === "ATRASADA";
     return (
       <main className="mx-auto max-w-md px-4 py-12">
         <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
@@ -39,11 +41,36 @@ export default async function PaginaPlanos() {
         <p className="mt-2 text-ink-soft">
           Status: {ROTULO_STATUS[assinaturaAtual.status] ?? assinaturaAtual.status}
         </p>
-        {assinaturaAtual.status === "PENDENTE" && (
-          <p className="mt-4 text-sm text-ink-soft">
-            O pagamento ainda não foi implementado (isso entra na Fase 5) — por enquanto essa
-            página só confirma que a escolha do plano ficou registrada.
-          </p>
+        {precisaPagar && (
+          <div className="mt-4 flex flex-col gap-2">
+            <p className="text-sm text-ink-soft">Escolha como pagar:</p>
+            <div className="flex flex-wrap gap-2">
+              <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "PIX")}>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink"
+                >
+                  Pix (6% off)
+                </button>
+              </form>
+              <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "CARTAO")}>
+                <button
+                  type="submit"
+                  className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+                >
+                  Cartão (mensalidade automática)
+                </button>
+              </form>
+              <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "DEBITO")}>
+                <button
+                  type="submit"
+                  className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+                >
+                  Débito
+                </button>
+              </form>
+            </div>
+          </div>
         )}
         <Link href="/painel" className="mt-8 inline-block text-sm text-ink-soft hover:text-ink">
           ← Voltar pro painel
