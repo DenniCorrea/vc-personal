@@ -46,12 +46,18 @@ export default async function PaginaPainel() {
       </h1>
 
       {session.user.role === "ADMIN" && (
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href="/painel/admin/planos"
             className="inline-block rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
           >
             Gerenciar planos
+          </Link>
+          <Link
+            href="/painel/admin/horarios"
+            className="inline-block rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+          >
+            Gerenciar horários
           </Link>
         </div>
       )}
@@ -64,6 +70,11 @@ export default async function PaginaPainel() {
               <p className="text-sm text-ink-soft">
                 Status: {ROTULO_STATUS[assinatura.status] ?? assinatura.status}
               </p>
+              {assinatura.status === "ATIVA" && (
+                <Link href="/painel/agenda" className="mt-2 inline-block text-sm font-medium text-accent">
+                  Ver agenda
+                </Link>
+              )}
             </>
           ) : (
             <>

@@ -61,6 +61,14 @@ enum TipoAtendimento {
   DISTANCIA
 }
 
+enum StatusAgendamento {
+  AGENDADO
+  CONFIRMADO
+  CONCLUIDO
+  CANCELADO
+  FALTOU
+}
+
 // ---------------------------------------------------------------------------
 // Modelos
 // ---------------------------------------------------------------------------
@@ -96,7 +104,8 @@ model Usuario {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
-  assinaturas Assinatura[]
+  assinaturas  Assinatura[]
+  agendamentos Agendamento[]
 
   @@map("usuarios")
 }
@@ -120,9 +129,12 @@ model Plano {
   preco         Decimal       @db.Decimal(10, 2)
   periodicidade Periodicidade @default(MENSAL)
 
-  // --- especifico de Produto.ALUNO — fica null em planos de MENTORIA ---
-  frequenciaSemanal Int? // 1 a 7x/semana (validado na camada de aplicacao)
-  limiteAgendamentos Int? // creditos de agendamento por ciclo — usado na Fase 4
+  // `limiteAgendamentos` vale pros dois produtos (quantas sessoes o ciclo
+  // semanal cobre — aluno E mentoria tem essa trava, confirmado com o
+  // Victor). O resto abaixo e especifico de Produto.ALUNO e fica null em
+  // planos de MENTORIA.
+  limiteAgendamentos Int?
+  frequenciaSemanal  Int? // 1 a 7x/semana (validado na camada de aplicacao)
   incluiNutricao     Boolean           @default(false)
   tiposAtendimento   TipoAtendimento[]
 
@@ -132,8 +144,8 @@ model Plano {
   // aplica automaticamente, e so o que aparece pro cliente.
   beneficios String[]
 
-  ativo    Boolean  @default(true)
-  criadoEm DateTime @default(now())
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
   assinaturas Assinatura[]
@@ -162,5 +174,64 @@ model Assinatura {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
+  agendamentos Agendamento[]
+
   @@map("assinaturas")
+}
+
+// Um horario que o admin abriu na agenda. Existe independente de estar
+// ocupado ou nao — "ocupado" e so "existe um Agendamento nao-cancelado
+// apontando pra ele", nao um campo aqui. Isso evita ter que sincronizar um
+// booleano "reservado" toda vez que um Agendamento muda de status.
+model Horario {
+  id String @id @default(uuid())
+
+  produto         Produto
+  tipoAtendimento TipoAtendimento?
+
+  inicio DateTime
+  fim    DateTime
+
+  // Fechar um horario que ainda nao foi usado (ex: Victor bloqueou aquele
+  // dia). Diferente de deletar: preserva o historico se algum dia teve
+  // Agendamento vinculado.
+  ativo Boolean @default(true)
+
+  criadoEm     DateTime      @default(now())
+  agendamentos Agendamento[]
+
+  @@map("horarios")
+}
+
+// Uma tentativa de reserva de alguem contra um Horario. Nunca e apagado —
+// cancelar so muda o `status` pra CANCELADO (o que libera o Horario pra
+// outra pessoa), preservando o historico de falta/cancelamento que a Fase
+// 10 (retencao) vai usar.
+model Agendamento {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  // Contra qual assinatura esse agendamento consome credito do ciclo. Nao
+  // usamos so `usuarioId` pra isso porque, no futuro, um usuario podera ter
+  // mais de uma assinatura no historico — precisamos saber a assinatura
+  // exata vigente quando o agendamento foi feito.
+  assinatura   Assinatura @relation(fields: [assinaturaId], references: [id])
+  assinaturaId String
+
+  horario   Horario @relation(fields: [horarioId], references: [id])
+  horarioId String
+
+  status StatusAgendamento @default(AGENDADO)
+
+  // true = fora do limite do plano daquele ciclo. A Fase 5 vai exigir
+  // pagamento pra esses; por enquanto (como a Assinatura PENDENTE) so fica
+  // registrado.
+  avulso Boolean @default(false)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("agendamentos")
 }
