@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
+/* Paleta "VC Personal" — a mesma usada no blueprint da Etapa 1, agora como
+   tokens reais. Definida uma vez aqui, todas as paginas usam via classes
+   Tailwind (bg-paper, text-ink, text-accent...) em vez de cor solta. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: #f7f4ec;
+  --color-paper-raised: #ffffff;
+  --color-ink: #211d18;
+  --color-ink-soft: #5b564c;
+  --color-line: #e4dfd1;
+  --color-accent: #a8672a;
+  --color-accent-ink: #ffffff;
+  --color-warn: #9c3b2e;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-paper: #17140f;
+    --color-paper-raised: #201c16;
+    --color-ink: #f3efe6;
+    --color-ink-soft: #b8b0a2;
+    --color-line: #39332a;
+    --color-accent: #d99a4e;
+    --color-accent-ink: #1b1200;
+    --color-warn: #e08a72;
   }
 }
 
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-paper-raised: var(--color-paper-raised);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-line: var(--color-line);
+  --color-accent: var(--color-accent);
+  --color-accent-ink: var(--color-accent-ink);
+  --color-warn: var(--color-warn);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-barlow-condensed);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
