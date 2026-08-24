@@ -28,19 +28,34 @@ export default async function PaginaPainel() {
     redirect("/login");
   }
 
-  const assinatura =
+  const [assinatura, alertasNaoLidos] = await Promise.all([
     session.user.role !== "ADMIN"
-      ? await prisma.assinatura.findFirst({
+      ? prisma.assinatura.findFirst({
           where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA"] } },
           include: { plano: true },
         })
-      : null;
+      : null,
+    prisma.alerta.count({ where: { usuarioId: session.user.id, lido: false } }),
+  ]);
 
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col justify-center px-4 py-12">
-      <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-        {ROTULO_ROLE[session.user.role] ?? session.user.role}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
+          {ROTULO_ROLE[session.user.role] ?? session.user.role}
+        </p>
+        <Link
+          href="/painel/alertas"
+          className="flex items-center gap-1.5 text-sm font-medium text-ink-soft hover:text-ink"
+        >
+          Alertas
+          {alertasNaoLidos > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-ink">
+              {alertasNaoLidos}
+            </span>
+          )}
+        </Link>
+      </div>
       <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
         Bem-vindo, {session.user.name}
       </h1>

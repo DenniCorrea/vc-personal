@@ -112,6 +112,15 @@ enum FrequenciaMensagem {
   SEMANAL
 }
 
+enum TipoAlerta {
+  RENOVACAO_PROXIMA // pro proprio usuario: sua assinatura vence em breve
+  ASSINATURA_ATRASADA // pro proprio usuario: passou da data e nao renovou
+  ALUNO_SEM_RENOVACAO // pro ADMIN: fulano nao renovou, hora do follow-up
+  HABITO_AGUA
+  HABITO_SONO
+  AGENDA // sessao chegando
+}
+
 // ---------------------------------------------------------------------------
 // Modelos
 // ---------------------------------------------------------------------------
@@ -152,6 +161,7 @@ model Usuario {
   pagamentos   Pagamento[]
   treinos      Treino[]
   habitos      Habito[]
+  alertas      Alerta[]
 
   @@map("usuarios")
 }
@@ -511,4 +521,25 @@ model MensagemMentalidade {
   criadoEm    DateTime @default(now())
 
   @@map("mensagens_mentalidade")
+}
+
+// `chaveDedup` e o que impede o motor de gerar o MESMO alerta toda vez que
+// roda (ex: se checar a cada hora, nao quero 24 alertas por dia dizendo a
+// mesma coisa). E uma string que a Fase 10 monta pra ser unica por
+// situacao+dia (ex: "habito:<id>:2026-08-24").
+model Alerta {
+  id String @id @default(uuid())
+
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+  tipo      TipoAlerta
+  mensagem  String
+
+  lido Boolean @default(false)
+
+  chaveDedup String @unique
+
+  criadoEm DateTime @default(now())
+
+  @@map("alertas")
 }
