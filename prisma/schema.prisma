@@ -1,0 +1,156 @@
+// Schema de dados do VC Personal — Etapa 1 (nucleo: usuarios, planos, assinatura).
+// Cada fase seguinte (agendamento, pagamento, treino, habitos, alertas...) adiciona
+// seus proprios models aqui e gera uma nova migration — nao criamos hoje tabela
+// que so vai ser usada la na frente.
+//
+// Saiba mais: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // A connection string (DATABASE_URL / DIRECT_URL) mora em prisma.config.ts,
+  // nao aqui — e assim desde o Prisma 7.
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+// Os 3 perfis do app. Uma unica tabela Usuario com um campo `role` (em vez de
+// 3 tabelas separadas) porque os 3 perfis compartilham login, nome, telefone
+// e o mesmo fluxo de autenticacao — so o que cada um pode FAZER difere, e isso
+// e responsabilidade da camada de autorizacao (Fase 2), nao do modelo de dados.
+enum Role {
+  ALUNO
+  PERSONAL_PARCEIRO
+  ADMIN
+}
+
+enum StatusAssinatura {
+  ATIVA
+  ATRASADA
+  CANCELADA
+  EXPIRADA
+}
+
+// Como o aluno é atendido dentro de uma sessao do plano.
+enum TipoAtendimento {
+  VIDEO
+  PRESENCIAL
+  DISTANCIA
+}
+
+// ---------------------------------------------------------------------------
+// Modelos
+// ---------------------------------------------------------------------------
+
+model Usuario {
+  id        String  @id @default(uuid())
+  email     String  @unique
+  // Hash da senha (bcrypt), nunca a senha em texto puro. Preenchido na Fase 2
+  // quando a autenticacao entrar; por enquanto so reservamos o campo.
+  senhaHash String
+  nome      String
+  telefone  String?
+
+  // --- Dados LGPD-sensiveis ---
+  // Nunca guardamos o CPF em texto puro. `cpfHash` e um hash (SHA-256 + salt
+  // fixo do app) usado so para checar duplicidade de cadastro — ele nao serve
+  // pra "descobrir" o CPF de volta. Se um dia precisarmos EXIBIR o CPF (ex.
+  // emitir nota fiscal), isso pede um campo cifrado reversivel a parte, com
+  // chave em variavel de ambiente, e endpoint restrito a admin — decisao pra
+  // quando essa necessidade aparecer de verdade, nao antes.
+  cpfHash             String?   @unique
+  endereco            String?
+  consentimentoLgpdEm DateTime?
+
+  role Role @default(ALUNO)
+
+  // Soft delete: "desligar" o usuario sem apagar o historico de pagamento e
+  // assinatura, que a LGPD e a contabilidade exigem manter por um tempo.
+  // Exclusao definitiva (direito ao esquecimento) e uma operacao separada,
+  // explicita, feita sob pedido do titular — nao e so virar esse campo pra false.
+  ativo Boolean @default(true)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  assinaturas Assinatura[]
+
+  @@map("usuarios")
+}
+
+// Catalogo de planos de aula (o que o Victor vende a alunos), definido pelo admin.
+model PlanoAluno {
+  id   String @id @default(uuid())
+  // Unico para dar uma chave natural pro catalogo (evita 2 planos "Plano 3x
+  // Semana" duplicados) e pra permitir seed idempotente via upsert.
+  nome String @unique
+
+  // 1 a 7 — quantas sessoes por semana o plano cobre. A validacao de que o
+  // valor esta nesse intervalo fica na camada de aplicacao (Fase 3); o banco
+  // so garante que e um inteiro.
+  frequenciaSemanal Int
+
+  incluiNutricao   Boolean           @default(false)
+  tiposAtendimento TipoAtendimento[]
+
+  // Decimal (nao Float!) para dinheiro: Float arredonda binario e pode gerar
+  // R$ 19,999999999 em vez de R$ 20,00. Decimal(10,2) guarda exatamente 2 casas.
+  precoMensal Decimal @db.Decimal(10, 2)
+
+  ativo    Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  assinaturas Assinatura[]
+
+  @@map("planos_aluno")
+}
+
+// Catalogo do plano de consultoria (o que o Victor vende a OUTROS personais).
+model PlanoConsultoria {
+  id          String  @id @default(uuid())
+  nome        String  @unique
+  descricao   String
+  precoMensal Decimal @db.Decimal(10, 2)
+
+  ativo    Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  assinaturas Assinatura[]
+
+  @@map("planos_consultoria")
+}
+
+// O vinculo entre um Usuario e UM dos dois catalogos de plano acima.
+// Por que nao 2 tabelas (AssinaturaAluno / AssinaturaConsultoria)? Porque o
+// ciclo de vida (status, datas de renovacao, pagamento) e identico nos dois
+// casos — so o catalogo de origem muda. Duas FKs opcionais + a regra "exatamente
+// uma delas preenchida" e validada na Fase 3 (camada de aplicacao) resolve sem
+// duplicar logica de renovacao/cobranca em dois lugares.
+model Assinatura {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  planoAluno   PlanoAluno? @relation(fields: [planoAlunoId], references: [id])
+  planoAlunoId String?
+
+  planoConsultoria   PlanoConsultoria? @relation(fields: [planoConsultoriaId], references: [id])
+  planoConsultoriaId String?
+
+  status               StatusAssinatura @default(ATIVA)
+  dataInicio           DateTime         @default(now())
+  dataProximaRenovacao DateTime
+  renovacaoAutomatica  Boolean          @default(true)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("assinaturas")
+}
