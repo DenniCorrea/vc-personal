@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { registrarLogAdmin } from "@/lib/log-admin";
 
 const cortesiaSchema = z.object({
   usuarioId: z.string().min(1),
@@ -29,7 +30,7 @@ export async function concederCortesia(formData: FormData) {
     throw new Error("Essa pessoa já tem uma assinatura pendente, ativa ou atrasada.");
   }
 
-  await prisma.assinatura.create({
+  const assinatura = await prisma.assinatura.create({
     data: {
       usuarioId: parsed.data.usuarioId,
       planoId: parsed.data.planoId,
@@ -39,16 +40,18 @@ export async function concederCortesia(formData: FormData) {
       dataProximaRenovacao: new Date(`${parsed.data.dataProximaRenovacao}T00:00`),
     },
   });
+  await registrarLogAdmin(session.user.id, "concedeu cortesia", "Assinatura", assinatura.id);
 
   revalidatePath("/painel/admin/assinaturas");
   redirect("/painel/admin/assinaturas");
 }
 
 export async function encerrarCortesia(assinaturaId: string) {
-  await exigirPapel("ADMIN");
+  const session = await exigirPapel("ADMIN");
   await prisma.assinatura.update({
     where: { id: assinaturaId, cortesia: true },
     data: { status: "CANCELADA" },
   });
+  await registrarLogAdmin(session.user.id, "encerrou cortesia", "Assinatura", assinaturaId);
   revalidatePath("/painel/admin/assinaturas");
 }

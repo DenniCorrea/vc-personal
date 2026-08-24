@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { registrarLogAdmin } from "@/lib/log-admin";
 
 const planoAlunoSchema = z.object({
   nome: z.string().trim().min(2),
@@ -37,7 +38,7 @@ function linhasParaBeneficios(texto: string | undefined): string[] {
 }
 
 export async function salvarPlanoAluno(id: string, formData: FormData) {
-  await exigirPapel("ADMIN");
+  const session = await exigirPapel("ADMIN");
   // `Object.fromEntries` so mantem o ULTIMO valor de cada chave — perderia
   // silenciosamente os outros tipos de atendimento marcados, ja que os 3
   // checkboxes compartilham o name "tiposAtendimento". `getAll` pega todos.
@@ -57,17 +58,22 @@ export async function salvarPlanoAluno(id: string, formData: FormData) {
     beneficios: linhasParaBeneficios(parsed.data.beneficios),
   };
 
-  if (id === "novo") {
-    await prisma.plano.create({ data: dados });
-  } else {
-    await prisma.plano.update({ where: { id }, data: dados });
-  }
+  const plano =
+    id === "novo"
+      ? await prisma.plano.create({ data: dados })
+      : await prisma.plano.update({ where: { id }, data: dados });
+  await registrarLogAdmin(
+    session.user.id,
+    id === "novo" ? "criou plano" : "editou plano",
+    "Plano",
+    plano.id,
+  );
   revalidatePath("/painel/admin/planos");
   redirect("/painel/admin/planos");
 }
 
 export async function salvarPlanoMentoria(id: string, formData: FormData) {
-  await exigirPapel("ADMIN");
+  const session = await exigirPapel("ADMIN");
   const parsed = planoMentoriaSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados invalidos");
 
@@ -80,17 +86,23 @@ export async function salvarPlanoMentoria(id: string, formData: FormData) {
     beneficios: linhasParaBeneficios(parsed.data.beneficios),
   };
 
-  if (id === "novo") {
-    await prisma.plano.create({ data: dados });
-  } else {
-    await prisma.plano.update({ where: { id }, data: dados });
-  }
+  const plano =
+    id === "novo"
+      ? await prisma.plano.create({ data: dados })
+      : await prisma.plano.update({ where: { id }, data: dados });
+  await registrarLogAdmin(
+    session.user.id,
+    id === "novo" ? "criou plano" : "editou plano",
+    "Plano",
+    plano.id,
+  );
   revalidatePath("/painel/admin/planos");
   redirect("/painel/admin/planos");
 }
 
 export async function alternarAtivoPlano(id: string, ativo: boolean) {
-  await exigirPapel("ADMIN");
+  const session = await exigirPapel("ADMIN");
   await prisma.plano.update({ where: { id }, data: { ativo } });
+  await registrarLogAdmin(session.user.id, ativo ? "ativou plano" : "desativou plano", "Plano", id);
   revalidatePath("/painel/admin/planos");
 }

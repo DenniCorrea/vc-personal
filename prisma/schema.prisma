@@ -119,6 +119,7 @@ enum TipoAlerta {
   HABITO_AGUA
   HABITO_SONO
   AGENDA // sessao chegando
+  SOLICITACAO_EXCLUSAO // pro ADMIN: pessoa pediu exclusao da conta (LGPD)
 }
 
 // ---------------------------------------------------------------------------
@@ -165,6 +166,7 @@ model Usuario {
   // Assinaturas de cortesia que ESSE usuario (um admin) concedeu pra outras
   // pessoas — nao e "as assinaturas dele", e um log de quem liberou o que.
   assinaturasConcedidas Assinatura[]  @relation("AssinaturasConcedidas")
+  logsAdmin             LogAdmin[]
 
   @@map("usuarios")
 }
@@ -554,4 +556,23 @@ model Alerta {
   criadoEm DateTime @default(now())
 
   @@map("alertas")
+}
+
+// Log das acoes administrativas que mexem em acesso/dinheiro (item de LGPD
+// do briefing: "logs de acoes administrativas relevantes"). Nao registra
+// TUDO que o admin clica — so o que envolve conceder/revogar acesso ou
+// dinheiro, que e o que realmente importa auditar depois.
+model LogAdmin {
+  id String @id @default(uuid())
+
+  admin   Usuario @relation(fields: [adminId], references: [id])
+  adminId String
+
+  acao       String // ex: "concedeu cortesia", "desativou plano"
+  entidade   String // ex: "Assinatura", "Plano"
+  entidadeId String?
+
+  criadoEm DateTime @default(now())
+
+  @@map("logs_admin")
 }

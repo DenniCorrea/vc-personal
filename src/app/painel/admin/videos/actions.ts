@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { registrarLogAdmin } from "@/lib/log-admin";
 
 const videoSchema = z.object({
   produto: z.enum(["ALUNO", "MENTORIA"]),
@@ -15,7 +16,7 @@ const videoSchema = z.object({
 });
 
 export async function salvarVideo(id: string, formData: FormData) {
-  await exigirPapel("ADMIN");
+  const session = await exigirPapel("ADMIN");
   const parsed = videoSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados inválidos");
 
@@ -27,17 +28,23 @@ export async function salvarVideo(id: string, formData: FormData) {
     vimeoHash: parsed.data.vimeoHash || null,
   };
 
-  if (id === "novo") {
-    await prisma.video.create({ data: dados });
-  } else {
-    await prisma.video.update({ where: { id }, data: dados });
-  }
+  const video =
+    id === "novo"
+      ? await prisma.video.create({ data: dados })
+      : await prisma.video.update({ where: { id }, data: dados });
+  await registrarLogAdmin(
+    session.user.id,
+    id === "novo" ? "criou vídeo" : "editou vídeo",
+    "Video",
+    video.id,
+  );
   revalidatePath("/painel/admin/videos");
   redirect("/painel/admin/videos");
 }
 
 export async function alternarAtivoVideo(id: string, ativo: boolean) {
-  await exigirPapel("ADMIN");
+  const session = await exigirPapel("ADMIN");
   await prisma.video.update({ where: { id }, data: { ativo } });
+  await registrarLogAdmin(session.user.id, ativo ? "ativou vídeo" : "desativou vídeo", "Video", id);
   revalidatePath("/painel/admin/videos");
 }

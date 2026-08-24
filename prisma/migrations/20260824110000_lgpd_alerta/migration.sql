@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "TipoAlerta" ADD VALUE 'SOLICITACAO_EXCLUSAO';
+

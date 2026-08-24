@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { criarHorario, desativarHorario, marcarStatusAgendamento } from "./actions";
+import { criarHorario, desativarHorario, marcarStatusAgendamento, gerarHorariosRecorrentes } from "./actions";
+
+const DIAS_SEMANA = [
+  { valor: 1, rotulo: "Seg" },
+  { valor: 2, rotulo: "Ter" },
+  { valor: 3, rotulo: "Qua" },
+  { valor: 4, rotulo: "Qui" },
+  { valor: 5, rotulo: "Sex" },
+  { valor: 6, rotulo: "Sáb" },
+  { valor: 0, rotulo: "Dom" },
+] as const;
 
 const formatoDataHora = new Intl.DateTimeFormat("pt-BR", {
   weekday: "short",
@@ -112,6 +122,102 @@ export default async function PaginaAdminHorarios() {
           Abrir horário
         </button>
       </form>
+
+      <details className="mt-4">
+        <summary className="cursor-pointer text-sm font-medium text-accent">
+          Gerar vários horários de uma vez (recorrente)
+        </summary>
+        <form
+          action={gerarHorariosRecorrentes}
+          className="mt-3 grid grid-cols-2 gap-4 rounded-lg border border-line bg-paper-raised p-4"
+        >
+          <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+            Produto
+            <select
+              name="produto"
+              className="rounded-lg border border-line bg-paper px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+            >
+              <option value="ALUNO">Aluno</option>
+              <option value="MENTORIA">Mentoria</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+            Tipo de atendimento (opcional)
+            <select
+              name="tipoAtendimento"
+              className="rounded-lg border border-line bg-paper px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+            >
+              <option value="">—</option>
+              <option value="VIDEO">Vídeo</option>
+              <option value="PRESENCIAL">Presencial</option>
+              <option value="DISTANCIA">À distância</option>
+            </select>
+          </label>
+
+          <fieldset className="col-span-2 flex flex-col gap-2">
+            <legend className="text-sm font-medium text-ink">Dias da semana</legend>
+            <div className="flex flex-wrap gap-3">
+              {DIAS_SEMANA.map((dia) => (
+                <label key={dia.valor} className="flex items-center gap-1.5 text-sm text-ink-soft">
+                  <input type="checkbox" name="diasDaSemana" value={dia.valor} />
+                  {dia.rotulo}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+            Início
+            <input
+              name="horaInicio"
+              type="time"
+              required
+              className="rounded-lg border border-line bg-paper px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+            Fim
+            <input
+              name="horaFim"
+              type="time"
+              required
+              className="rounded-lg border border-line bg-paper px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+            A partir de
+            <input
+              name="dataInicio"
+              type="date"
+              required
+              className="rounded-lg border border-line bg-paper px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+            Por quantas semanas
+            <input
+              name="semanas"
+              type="number"
+              min={1}
+              max={12}
+              defaultValue={4}
+              required
+              className="rounded-lg border border-line bg-paper px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+            />
+          </label>
+
+          <button
+            type="submit"
+            className="col-span-2 mt-2 rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink"
+          >
+            Gerar horários
+          </button>
+        </form>
+      </details>
 
       <ul className="mt-8 flex flex-col gap-2">
         {horarios.map((horario) => {

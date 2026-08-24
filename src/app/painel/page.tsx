@@ -110,6 +110,12 @@ export default async function PaginaPainel() {
           >
             Acesso cortesia
           </Link>
+          <Link
+            href="/painel/admin/logs"
+            className="inline-block rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+          >
+            Histórico de ações
+          </Link>
         </div>
       )}
 
@@ -155,9 +161,12 @@ export default async function PaginaPainel() {
       )}
 
       {session.user.role !== "ADMIN" && (
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-4">
           <Link href="/painel/habitos" className="text-sm font-medium text-accent">
             Água, sono e mentalidade
+          </Link>
+          <Link href="/painel/dados" className="text-sm font-medium text-ink-soft hover:text-ink">
+            Seus dados (LGPD)
           </Link>
         </div>
       )}
