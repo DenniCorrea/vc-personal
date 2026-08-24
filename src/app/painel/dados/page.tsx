@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/auth-guard";
 import { solicitarExclusaoConta, enviarAvatar } from "./actions";
+import { sair } from "../actions";
 import { TrocarSenhaForm } from "./TrocarSenhaForm";
 
 export default async function PaginaMeusDados() {
@@ -79,7 +80,16 @@ export default async function PaginaMeusDados() {
         </form>
       </div>
 
-      <Link href="/painel" className="mt-8 inline-block text-sm text-ink-soft hover:text-ink">
+      <form action={sair} className="mt-8">
+        <button
+          type="submit"
+          className="rounded-lg border border-line px-5 py-2.5 text-sm font-medium text-ink hover:border-accent"
+        >
+          Sair
+        </button>
+      </form>
+
+      <Link href="/painel" className="mt-6 inline-block text-sm text-ink-soft hover:text-ink">
         ← Voltar pro painel
       </Link>
     </main>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { sair } from "../actions";
 
 // Os 8 itens do handoff (tela 9), seguidos do que ja existia antes desse
 // pacote e continua funcionando igual — so ganhou a casca nova.
@@ -63,6 +64,14 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/painel/adm
               <p className="truncate text-[13px] text-ink">{session.user.name}</p>
               <p className="text-[11px] text-ink-faint">Consultor</p>
             </div>
+            <form action={sair}>
+              <button
+                type="submit"
+                className="shrink-0 rounded-[2px] border border-line px-2.5 py-1.5 text-[11px] text-ink-soft hover:border-accent hover:text-ink lg:ml-2"
+              >
+                Sair
+              </button>
+            </form>
           </div>
         </div>
 
