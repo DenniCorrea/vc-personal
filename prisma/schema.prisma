@@ -156,12 +156,15 @@ model Usuario {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
-  assinaturas  Assinatura[]
-  agendamentos Agendamento[]
-  pagamentos   Pagamento[]
-  treinos      Treino[]
-  habitos      Habito[]
-  alertas      Alerta[]
+  assinaturas           Assinatura[]
+  agendamentos          Agendamento[]
+  pagamentos            Pagamento[]
+  treinos               Treino[]
+  habitos               Habito[]
+  alertas               Alerta[]
+  // Assinaturas de cortesia que ESSE usuario (um admin) concedeu pra outras
+  // pessoas — nao e "as assinaturas dele", e um log de quem liberou o que.
+  assinaturasConcedidas Assinatura[]  @relation("AssinaturasConcedidas")
 
   @@map("usuarios")
 }
@@ -232,6 +235,15 @@ model Assinatura {
   dataInicio           DateTime         @default(now())
   dataProximaRenovacao DateTime
   renovacaoAutomatica  Boolean          @default(true)
+
+  // Acesso concedido pelo admin sem pagamento (cliente VIP, cortesia,
+  // periodo de teste). Quando `dataProximaRenovacao` passar, o motor de
+  // alertas da Fase 10 trata do mesmo jeito que uma assinatura paga vencida
+  // — o admin decide na hora se renova a cortesia ou deixa vencer, sem
+  // precisar de logica separada pra isso.
+  cortesia       Boolean  @default(false)
+  concedidaPor   Usuario? @relation("AssinaturasConcedidas", fields: [concedidaPorId], references: [id])
+  concedidaPorId String?
 
   // Preenchido so quando o pagamento e por cartao: e o id da assinatura
   // recorrente (PreApproval) no Mercado Pago, que cobra sozinha todo mes.

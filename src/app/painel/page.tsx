@@ -31,7 +31,7 @@ export default async function PaginaPainel() {
   const [assinatura, alertasNaoLidos] = await Promise.all([
     session.user.role !== "ADMIN"
       ? prisma.assinatura.findFirst({
-          where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA"] } },
+          where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA", "ATRASADA"] } },
           include: { plano: true },
         })
       : null,
@@ -104,6 +104,12 @@ export default async function PaginaPainel() {
           >
             Gerenciar mensagens
           </Link>
+          <Link
+            href="/painel/admin/assinaturas"
+            className="inline-block rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+          >
+            Acesso cortesia
+          </Link>
         </div>
       )}
 
@@ -114,6 +120,7 @@ export default async function PaginaPainel() {
               <p className="font-medium text-ink">{assinatura.plano.nome}</p>
               <p className="text-sm text-ink-soft">
                 Status: {ROTULO_STATUS[assinatura.status] ?? assinatura.status}
+                {assinatura.cortesia && " · Cortesia"}
               </p>
               {assinatura.status === "ATIVA" && (
                 <div className="mt-2 flex flex-wrap gap-4">

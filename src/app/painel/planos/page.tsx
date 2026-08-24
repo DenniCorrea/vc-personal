@@ -29,7 +29,12 @@ export default async function PaginaPlanos() {
   });
 
   if (assinaturaAtual) {
-    const precisaPagar = assinaturaAtual.status === "PENDENTE" || assinaturaAtual.status === "ATRASADA";
+    // Cortesia nunca mostra botao de pagar, mesmo se um dia ficar ATRASADA
+    // (esquecimento de renovar a cortesia) — quem resolve isso e o admin
+    // renovando a cortesia, nao a pessoa pagando.
+    const precisaPagar =
+      !assinaturaAtual.cortesia &&
+      (assinaturaAtual.status === "PENDENTE" || assinaturaAtual.status === "ATRASADA");
     return (
       <main className="mx-auto max-w-md px-4 py-12">
         <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
@@ -40,6 +45,7 @@ export default async function PaginaPlanos() {
         </h1>
         <p className="mt-2 text-ink-soft">
           Status: {ROTULO_STATUS[assinaturaAtual.status] ?? assinaturaAtual.status}
+          {assinaturaAtual.cortesia && " · Cortesia"}
         </p>
         {precisaPagar && (
           <div className="mt-4 flex flex-col gap-2">
