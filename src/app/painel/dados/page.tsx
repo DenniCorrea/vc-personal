@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/auth-guard";
-import { solicitarExclusaoConta } from "./actions";
+import { solicitarExclusaoConta, enviarAvatar } from "./actions";
 import { TrocarSenhaForm } from "./TrocarSenhaForm";
 
 export default async function PaginaMeusDados() {
-  await exigirSessao();
+  const session = await exigirSessao();
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: session.user.id },
+    select: { nome: true, avatarUrl: true },
+  });
 
   return (
     <main className="mx-auto max-w-md px-4 py-12">
@@ -12,6 +17,33 @@ export default async function PaginaMeusDados() {
         Privacidade e segurança
       </p>
       <h1 className="mt-1 font-display text-3xl font-semibold text-ink">Seus dados</h1>
+
+      <div className="mt-6 flex items-center gap-4 rounded-lg border border-line bg-paper-raised p-4">
+        {usuario?.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={usuario.avatarUrl}
+            alt=""
+            className="h-14 w-14 rounded-full border border-accent object-cover"
+          />
+        ) : (
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-accent text-lg text-accent">
+            {usuario?.nome.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <form action={enviarAvatar} className="flex flex-col gap-1">
+          <input
+            type="file"
+            name="avatar"
+            accept="image/*"
+            required
+            className="text-xs text-ink-soft file:mr-2 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-accent-ink"
+          />
+          <button type="submit" className="self-start text-xs font-medium text-accent">
+            Salvar foto
+          </button>
+        </form>
+      </div>
 
       <div className="mt-6 rounded-lg border border-line bg-paper-raised p-4">
         <p className="text-sm font-medium text-ink">Trocar senha</p>

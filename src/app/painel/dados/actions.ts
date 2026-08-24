@@ -1,10 +1,25 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/auth-guard";
 import { hashSenha, verificarSenha } from "@/lib/senha";
+import { enviarImagem } from "@/lib/cloudinary";
 import { signOut } from "@/auth";
+
+export async function enviarAvatar(formData: FormData) {
+  const session = await exigirSessao();
+
+  const arquivo = formData.get("avatar");
+  if (!(arquivo instanceof File) || arquivo.size === 0) throw new Error("Selecione uma imagem.");
+
+  const url = await enviarImagem(arquivo, "avatares");
+  await prisma.usuario.update({ where: { id: session.user.id }, data: { avatarUrl: url } });
+
+  revalidatePath("/painel/dados");
+  revalidatePath("/painel");
+}
 
 const trocarSenhaSchema = z
   .object({

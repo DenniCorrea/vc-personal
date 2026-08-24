@@ -18,15 +18,17 @@ export default async function PaginaPainel() {
     return <DashboardAluno usuarioId={session.user.id} nome={session.user.name ?? ""} />;
   }
 
-  const [assinatura, alertasNaoLidos] = await Promise.all([
-    session.user.role !== "ADMIN"
-      ? prisma.assinatura.findFirst({
-          where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA", "ATRASADA"] } },
-          include: { plano: true },
-        })
-      : null,
-    prisma.alerta.count({ where: { usuarioId: session.user.id, lido: false } }),
-  ]);
+  // ADMIN tem sua propria casca (sidebar) e ponto de entrada — "Visão do
+  // dia" (handoff, tela 9) — em vez do dashboard generico.
+  if (session.user.role === "ADMIN") {
+    redirect("/painel/admin");
+  }
+
+  const assinatura = await prisma.assinatura.findFirst({
+    where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA", "ATRASADA"] } },
+    include: { plano: true },
+  });
+  const alertasNaoLidos = await prisma.alerta.count({ where: { usuarioId: session.user.id, lido: false } });
 
   return (
     <DashboardAdminOuPersonal
