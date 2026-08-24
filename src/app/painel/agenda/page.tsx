@@ -29,17 +29,13 @@ export default async function PaginaAgenda() {
 
   if (!assinatura) {
     return (
-      <main className="mx-auto max-w-md px-4 py-12">
-        <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-          Agenda
-        </p>
-        <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
-          Você ainda não tem uma assinatura ativa
-        </h1>
-        <p className="mt-2 text-ink-soft">
+      <main className="mx-auto max-w-md px-6 pt-13 pb-10">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Agenda</p>
+        <h1 className="font-display mt-1 text-[26px] text-ink">Você ainda não tem uma assinatura ativa</h1>
+        <p className="mt-2 text-[14px] text-ink-soft">
           Escolha e assine um plano pra poder agendar seus atendimentos.
         </p>
-        <Link href="/painel/planos" className="mt-4 inline-block text-sm font-medium text-accent">
+        <Link href="/painel/planos" className="mt-4 inline-block text-[13px] font-medium text-accent">
           Ver planos
         </Link>
       </main>
@@ -88,104 +84,103 @@ export default async function PaginaAgenda() {
   const excedeuLimite = usoSemana >= limite;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12">
-      <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-        Agenda
-      </p>
-      <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
+    <main className="mx-auto max-w-2xl px-6 pt-13 pb-10">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Agenda</p>
+      <h1 className="font-display mt-1 text-[26px] text-ink">
         {usoSemana} de {limite} sessões usadas essa semana
       </h1>
       {excedeuLimite && (
-        <p className="mt-2 text-sm text-warn">
+        <p className="mt-2 text-[13px]" style={{ color: "var(--color-warn)" }}>
           Limite semanal atingido — a próxima reserva vira uma sessão avulsa, paga à parte.
         </p>
       )}
 
       <section className="mt-8">
-        <h2 className="font-display text-xl font-semibold text-ink">Seus próximos horários</h2>
-        <ul className="mt-3 flex flex-col gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">
+          Seus próximos horários
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
           {meusAgendamentos.map((agendamento) => {
             const pago = agendamento.pagamentos.some((p) => p.status === "APROVADO");
             const precisaPagar = agendamento.avulso && !pago;
             return (
-              <li
+              <div
                 key={agendamento.id}
-                className="flex flex-col gap-2 rounded-lg border border-line bg-paper-raised px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-[4px] border border-line bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <p className="font-medium text-ink">
-                    {formatoDataHora.format(agendamento.horario.inicio)}
-                    {agendamento.horario.tipoAtendimento &&
-                      ` · ${ROTULO_TIPO[agendamento.horario.tipoAtendimento]}`}
-                    {agendamento.avulso && (
-                      <span className="ml-2 text-xs font-normal text-warn">
-                        avulso{precisaPagar ? " · pagamento pendente" : ""}
-                      </span>
-                    )}
-                  </p>
-                </div>
+                <p className="text-[14px] text-ink">
+                  {formatoDataHora.format(agendamento.horario.inicio)}
+                  {agendamento.horario.tipoAtendimento && ` · ${ROTULO_TIPO[agendamento.horario.tipoAtendimento]}`}
+                  {agendamento.avulso && (
+                    <span className="ml-2 text-[12px] font-normal" style={{ color: "var(--color-warn)" }}>
+                      avulso{precisaPagar ? " · pagamento pendente" : ""}
+                    </span>
+                  )}
+                </p>
                 <div className="flex items-center gap-3">
                   {precisaPagar && (
                     <>
                       <form action={iniciarPagamentoAgendamento.bind(null, agendamento.id, "PIX")}>
                         <button
                           type="submit"
-                          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-ink"
+                          className="rounded-[2px] bg-accent px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-accent-ink"
                         >
-                          Pagar com Pix (6% off)
+                          Pix (6% off)
                         </button>
                       </form>
                       <form action={iniciarPagamentoAgendamento.bind(null, agendamento.id, "CARTAO")}>
-                        <button type="submit" className="text-sm text-ink-soft hover:text-ink">
+                        <button type="submit" className="text-[12px] text-ink-soft hover:text-ink">
                           Cartão
                         </button>
                       </form>
                     </>
                   )}
                   <form action={cancelarAgendamento.bind(null, agendamento.id)}>
-                    <button type="submit" className="text-sm text-ink-soft hover:text-ink">
+                    <button type="submit" className="text-[12px] text-ink-soft hover:text-ink">
                       Cancelar
                     </button>
                   </form>
                 </div>
-              </li>
+              </div>
             );
           })}
           {meusAgendamentos.length === 0 && (
-            <p className="text-sm text-ink-soft">Nenhum horário reservado ainda.</p>
+            <p className="text-[13px] text-ink-soft">Nenhum horário reservado ainda.</p>
           )}
-        </ul>
+        </div>
       </section>
 
       <section className="mt-8">
-        <h2 className="font-display text-xl font-semibold text-ink">Horários disponíveis</h2>
-        <ul className="mt-3 flex flex-col gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">
+          Horários disponíveis
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
           {horariosLivres.map((horario) => (
-            <li
+            <div
               key={horario.id}
-              className="flex items-center justify-between rounded-lg border border-line bg-paper-raised px-4 py-3"
+              className="flex items-center justify-between rounded-[4px] border border-line bg-card p-4"
             >
-              <p className="text-ink">
+              <p className="text-[14px] text-ink">
                 {formatoDataHora.format(horario.inicio)}
                 {horario.tipoAtendimento && ` · ${ROTULO_TIPO[horario.tipoAtendimento]}`}
               </p>
               <form action={reservarHorario.bind(null, horario.id, excedeuLimite)}>
                 <button
                   type="submit"
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink"
+                  className="rounded-[2px] bg-accent px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-accent-ink hover:bg-accent-hover"
                 >
                   {excedeuLimite ? "Reservar avulso" : "Reservar"}
                 </button>
               </form>
-            </li>
+            </div>
           ))}
           {horariosLivres.length === 0 && (
-            <p className="text-sm text-ink-soft">Nenhum horário disponível no momento.</p>
+            <p className="text-[13px] text-ink-soft">Nenhum horário disponível no momento.</p>
           )}
-        </ul>
+        </div>
       </section>
 
-      <Link href="/painel" className="mt-10 inline-block text-sm text-ink-soft hover:text-ink">
+      <Link href="/painel" className="mt-10 inline-block text-[13px] text-ink-soft hover:text-ink">
         ← Voltar pro painel
       </Link>
     </main>
