@@ -6,7 +6,7 @@ import { sair } from "./actions";
 
 const ROTULO_ROLE: Record<string, string> = {
   ALUNO: "Aluno",
-  PERSONAL_PARCEIRO: "Personal Parceiro",
+  PERSONAL_PARCEIRO: "Personal Trainer Mentorado",
   ADMIN: "Administrador",
 };
 
@@ -32,7 +32,7 @@ export default async function PaginaPainel() {
     session.user.role !== "ADMIN"
       ? await prisma.assinatura.findFirst({
           where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA"] } },
-          include: { planoAluno: true, planoConsultoria: true },
+          include: { plano: true },
         })
       : null;
 
@@ -60,9 +60,7 @@ export default async function PaginaPainel() {
         <div className="mt-6 rounded-lg border border-line bg-paper-raised px-4 py-3">
           {assinatura ? (
             <>
-              <p className="font-medium text-ink">
-                {assinatura.planoAluno?.nome ?? assinatura.planoConsultoria?.nome}
-              </p>
+              <p className="font-medium text-ink">{assinatura.plano.nome}</p>
               <p className="text-sm text-ink-soft">
                 Status: {ROTULO_STATUS[assinatura.status] ?? assinatura.status}
               </p>

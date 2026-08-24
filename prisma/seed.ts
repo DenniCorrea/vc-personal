@@ -1,10 +1,8 @@
-// Popula o banco com dados de teste: 1 admin, 1 aluno, 1 personal-parceiro e
-// os 2 catalogos de plano. Usa `upsert` em vez de `create` em tudo — assim
-// rodar `prisma db seed` de novo nao quebra por causa de e-mail/nome duplicado
-// (idempotente, como recomenda a propria doc do Prisma).
-// Carrega o .env de forma explicita: quando rodado via `prisma db seed`, o
-// prisma.config.ts ja carregou o .env antes de chamar este script — mas esse
-// import garante que `tsx prisma/seed.ts` tambem funcione sozinho, direto.
+// Popula o banco com dados de teste: 1 admin, 1 aluno, 1 personal-trainer
+// mentorado e os planos de exemplo dos dois produtos. Usa `upsert` em vez de
+// `create` em tudo — assim rodar `prisma db seed` de novo nao quebra por
+// causa de e-mail/nome duplicado (idempotente, como recomenda a propria doc
+// do Prisma).
 import "dotenv/config";
 import { createHash } from "node:crypto";
 import bcrypt from "bcryptjs";
@@ -37,26 +35,30 @@ async function main() {
     },
   });
 
-  const planoAluno3x = await prisma.planoAluno.upsert({
-    where: { nome: "Plano 3x Semana" },
+  const planoAluno3x = await prisma.plano.upsert({
+    where: { produto_nome: { produto: "ALUNO", nome: "Plano 3x Semana" } },
     update: {},
     create: {
+      produto: "ALUNO",
       nome: "Plano 3x Semana",
       frequenciaSemanal: 3,
+      limiteAgendamentos: 3,
       incluiNutricao: true,
       tiposAtendimento: ["VIDEO", "PRESENCIAL"],
-      precoMensal: 350.0,
+      preco: 350.0,
     },
   });
 
-  const planoConsultoria = await prisma.planoConsultoria.upsert({
-    where: { nome: "Consultoria de Posicionamento" },
+  const planoMentoria = await prisma.plano.upsert({
+    where: { produto_nome: { produto: "MENTORIA", nome: "Mentoria Líder PRO" } },
     update: {},
     create: {
-      nome: "Consultoria de Posicionamento",
+      produto: "MENTORIA",
+      nome: "Mentoria Líder PRO",
       descricao:
-        "Conteudo padrao + 1 video novo por semana para personais que querem cobrar mais.",
-      precoMensal: 297.0,
+        "Posicionamento, abordagem, mapeamento, vendas e fidelização para personal trainers que querem sair da guerra de preço.",
+      beneficios: ["Conteúdo padrão dos 5 pilares", "1 vídeo novo por semana", "Agenda própria de consultoria"],
+      preco: 297.0,
     },
   });
 
@@ -73,7 +75,7 @@ async function main() {
       consentimentoLgpdEm: new Date(),
       assinaturas: {
         create: {
-          planoAlunoId: planoAluno3x.id,
+          planoId: planoAluno3x.id,
           status: "ATIVA",
           dataProximaRenovacao: emUmMes,
         },
@@ -81,12 +83,12 @@ async function main() {
     },
   });
 
-  const personalParceiro = await prisma.usuario.upsert({
+  const personalMentorado = await prisma.usuario.upsert({
     where: { email: "personal.teste@vcpersonal.com" },
     update: {},
     create: {
       email: "personal.teste@vcpersonal.com",
-      nome: "Personal Parceiro Teste",
+      nome: "Personal Trainer Teste",
       senhaHash: senhaHashPadrao,
       role: "PERSONAL_PARCEIRO",
       telefone: "+55 11 91111-1111",
@@ -94,7 +96,7 @@ async function main() {
       consentimentoLgpdEm: new Date(),
       assinaturas: {
         create: {
-          planoConsultoriaId: planoConsultoria.id,
+          planoId: planoMentoria.id,
           status: "ATIVA",
           dataProximaRenovacao: emUmMes,
         },
@@ -105,8 +107,8 @@ async function main() {
   console.log({
     admin: admin.email,
     aluno: aluno.email,
-    personalParceiro: personalParceiro.email,
-    planos: [planoAluno3x.nome, planoConsultoria.nome],
+    personalMentorado: personalMentorado.email,
+    planos: [planoAluno3x.nome, planoMentoria.nome],
   });
 }
 

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { salvarPlanoConsultoria } from "../../actions";
+import { salvarPlanoMentoria } from "../../actions";
 
-export default async function PaginaPlanoConsultoria({
+export default async function PaginaPlanoMentoria({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -12,21 +12,19 @@ export default async function PaginaPlanoConsultoria({
   const { id } = await params;
 
   const plano =
-    id === "novo"
-      ? null
-      : await prisma.planoConsultoria.findUnique({ where: { id } });
+    id === "novo" ? null : await prisma.plano.findFirst({ where: { id, produto: "MENTORIA" } });
 
   if (id !== "novo" && !plano) notFound();
 
-  const salvar = salvarPlanoConsultoria.bind(null, id);
+  const salvar = salvarPlanoMentoria.bind(null, id);
 
   return (
     <main className="mx-auto max-w-md px-4 py-12">
       <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-        Admin
+        Admin · Produto Mentoria
       </p>
       <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
-        {plano ? "Editar plano de consultoria" : "Novo plano de consultoria"}
+        {plano ? "Editar plano de mentoria" : "Novo plano de mentoria"}
       </h1>
 
       <form action={salvar} className="mt-8 flex flex-col gap-4">
@@ -44,7 +42,7 @@ export default async function PaginaPlanoConsultoria({
           Descrição
           <textarea
             name="descricao"
-            defaultValue={plano?.descricao}
+            defaultValue={plano?.descricao ?? ""}
             required
             rows={4}
             className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
@@ -54,12 +52,23 @@ export default async function PaginaPlanoConsultoria({
         <label className="flex flex-col gap-1 text-sm font-medium text-ink">
           Preço mensal (R$)
           <input
-            name="precoMensal"
+            name="preco"
             type="number"
             step="0.01"
             min="0"
-            defaultValue={plano ? Number(plano.precoMensal) : undefined}
+            defaultValue={plano ? Number(plano.preco) : undefined}
             required
+            className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+          Benefícios (um por linha)
+          <textarea
+            name="beneficios"
+            rows={4}
+            defaultValue={plano?.beneficios.join("\n")}
+            placeholder="Conteúdo padrão dos 5 pilares&#10;1 vídeo novo por semana"
             className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
           />
         </label>

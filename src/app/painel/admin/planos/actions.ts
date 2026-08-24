@@ -14,14 +14,25 @@ const planoAlunoSchema = z.object({
     .union([z.string(), z.array(z.string())])
     .transform((v) => (Array.isArray(v) ? v : [v]))
     .pipe(z.array(z.enum(["VIDEO", "PRESENCIAL", "DISTANCIA"])).min(1)),
-  precoMensal: z.coerce.number().positive(),
+  preco: z.coerce.number().positive(),
+  beneficios: z.string().optional(),
 });
 
-const planoConsultoriaSchema = z.object({
+const planoMentoriaSchema = z.object({
   nome: z.string().trim().min(2),
   descricao: z.string().trim().min(2),
-  precoMensal: z.coerce.number().positive(),
+  preco: z.coerce.number().positive(),
+  beneficios: z.string().optional(),
 });
+
+// Textarea de um beneficio por linha — mais facil de editar pelo admin do
+// que um campo tipo "adicionar item" com JS. Linhas vazias sao descartadas.
+function linhasParaBeneficios(texto: string | undefined): string[] {
+  return (texto ?? "")
+    .split("\n")
+    .map((linha) => linha.trim())
+    .filter(Boolean);
+}
 
 export async function salvarPlanoAluno(id: string, formData: FormData) {
   await exigirPapel("ADMIN");
@@ -33,44 +44,49 @@ export async function salvarPlanoAluno(id: string, formData: FormData) {
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados invalidos");
 
   const dados = {
+    produto: "ALUNO" as const,
     nome: parsed.data.nome,
     frequenciaSemanal: parsed.data.frequenciaSemanal,
+    limiteAgendamentos: parsed.data.frequenciaSemanal,
     incluiNutricao: parsed.data.incluiNutricao === "on",
     tiposAtendimento: parsed.data.tiposAtendimento,
-    precoMensal: parsed.data.precoMensal,
+    preco: parsed.data.preco,
+    beneficios: linhasParaBeneficios(parsed.data.beneficios),
   };
 
   if (id === "novo") {
-    await prisma.planoAluno.create({ data: dados });
+    await prisma.plano.create({ data: dados });
   } else {
-    await prisma.planoAluno.update({ where: { id }, data: dados });
+    await prisma.plano.update({ where: { id }, data: dados });
   }
   revalidatePath("/painel/admin/planos");
   redirect("/painel/admin/planos");
 }
 
-export async function salvarPlanoConsultoria(id: string, formData: FormData) {
+export async function salvarPlanoMentoria(id: string, formData: FormData) {
   await exigirPapel("ADMIN");
-  const parsed = planoConsultoriaSchema.safeParse(Object.fromEntries(formData));
+  const parsed = planoMentoriaSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados invalidos");
 
+  const dados = {
+    produto: "MENTORIA" as const,
+    nome: parsed.data.nome,
+    descricao: parsed.data.descricao,
+    preco: parsed.data.preco,
+    beneficios: linhasParaBeneficios(parsed.data.beneficios),
+  };
+
   if (id === "novo") {
-    await prisma.planoConsultoria.create({ data: parsed.data });
+    await prisma.plano.create({ data: dados });
   } else {
-    await prisma.planoConsultoria.update({ where: { id }, data: parsed.data });
+    await prisma.plano.update({ where: { id }, data: dados });
   }
   revalidatePath("/painel/admin/planos");
   redirect("/painel/admin/planos");
 }
 
-export async function alternarAtivoPlanoAluno(id: string, ativo: boolean) {
+export async function alternarAtivoPlano(id: string, ativo: boolean) {
   await exigirPapel("ADMIN");
-  await prisma.planoAluno.update({ where: { id }, data: { ativo } });
-  revalidatePath("/painel/admin/planos");
-}
-
-export async function alternarAtivoPlanoConsultoria(id: string, ativo: boolean) {
-  await exigirPapel("ADMIN");
-  await prisma.planoConsultoria.update({ where: { id }, data: { ativo } });
+  await prisma.plano.update({ where: { id }, data: { ativo } });
   revalidatePath("/painel/admin/planos");
 }

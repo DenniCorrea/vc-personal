@@ -61,7 +61,7 @@ export default function PaginaCadastro() {
           </label>
           <label className="flex items-center gap-2 text-sm text-ink-soft">
             <input type="radio" name="role" value="PERSONAL_PARCEIRO" />
-            Personal trainer — quero a consultoria
+            Personal trainer — quero a mentoria
           </label>
         </fieldset>
 

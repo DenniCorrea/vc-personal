@@ -1,7 +1,6 @@
-// Schema de dados do VC Personal — Etapa 1 (nucleo: usuarios, planos, assinatura).
-// Cada fase seguinte (agendamento, pagamento, treino, habitos, alertas...) adiciona
-// seus proprios models aqui e gera uma nova migration — nao criamos hoje tabela
-// que so vai ser usada la na frente.
+// Schema de dados do VC Personal.
+// Cada fase adiciona seus proprios models aqui e gera uma nova migration —
+// nao criamos hoje tabela que so vai ser usada la na frente.
 //
 // Saiba mais: https://pris.ly/d/prisma-schema
 
@@ -28,6 +27,20 @@ enum Role {
   ALUNO
   PERSONAL_PARCEIRO
   ADMIN
+}
+
+// Os dois negocios do Victor, que compartilham infraestrutura (usuario, login,
+// pagamento, assinatura) mas nunca devem misturar conteudo/regras. Um Plano
+// pertence a exatamente um Produto.
+enum Produto {
+  ALUNO
+  MENTORIA
+}
+
+enum Periodicidade {
+  MENSAL
+  TRIMESTRAL
+  ANUAL
 }
 
 enum StatusAssinatura {
@@ -88,67 +101,60 @@ model Usuario {
   @@map("usuarios")
 }
 
-// Catalogo de planos de aula (o que o Victor vende a alunos), definido pelo admin.
-model PlanoAluno {
-  id   String @id @default(uuid())
-  // Unico para dar uma chave natural pro catalogo (evita 2 planos "Plano 3x
-  // Semana" duplicados) e pra permitir seed idempotente via upsert.
-  nome String @unique
+// Catalogo unico de planos dos dois produtos. Em vez de uma tabela por
+// produto (PlanoAluno, PlanoConsultoria — o que tinhamos antes), um Plano
+// carrega o campo `produto` que diz o que ele vende; os campos especificos
+// de ALUNO (frequenciaSemanal, tiposAtendimento, incluiNutricao) ficam
+// opcionais e simplesmente nao se aplicam a um plano de MENTORIA. A troca:
+// lancar um produto novo no futuro e 1 linha a mais no enum `Produto`, nao
+// uma tabela nova + tela de admin nova + FK nova na Assinatura.
+model Plano {
+  id      String  @id @default(uuid())
+  produto Produto
 
-  // 1 a 7 — quantas sessoes por semana o plano cobre. A validacao de que o
-  // valor esta nesse intervalo fica na camada de aplicacao (Fase 3); o banco
-  // so garante que e um inteiro.
-  frequenciaSemanal Int
-
-  incluiNutricao   Boolean           @default(false)
-  tiposAtendimento TipoAtendimento[]
+  nome      String
+  descricao String?
 
   // Decimal (nao Float!) para dinheiro: Float arredonda binario e pode gerar
   // R$ 19,999999999 em vez de R$ 20,00. Decimal(10,2) guarda exatamente 2 casas.
-  precoMensal Decimal @db.Decimal(10, 2)
+  preco         Decimal       @db.Decimal(10, 2)
+  periodicidade Periodicidade @default(MENSAL)
+
+  // --- especifico de Produto.ALUNO — fica null em planos de MENTORIA ---
+  frequenciaSemanal Int? // 1 a 7x/semana (validado na camada de aplicacao)
+  limiteAgendamentos Int? // creditos de agendamento por ciclo — usado na Fase 4
+  incluiNutricao     Boolean           @default(false)
+  tiposAtendimento   TipoAtendimento[]
+
+  // Lista livre pro admin descrever diferenciais sem precisar de migration
+  // pra cada beneficio novo (ex: "acesso a grupo exclusivo", "avaliacao
+  // fisica mensal"). Texto puro de proposito — nao e regra que o sistema
+  // aplica automaticamente, e so o que aparece pro cliente.
+  beneficios String[]
 
   ativo    Boolean  @default(true)
   criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
   assinaturas Assinatura[]
 
-  @@map("planos_aluno")
+  // Dois planos do MESMO produto nao podem ter nome igual (evita catalogo
+  // confuso), mas um plano de ALUNO e um de MENTORIA podem, em tese,
+  // coincidir de nome sem problema.
+  @@unique([produto, nome])
+  @@map("planos")
 }
 
-// Catalogo do plano de consultoria (o que o Victor vende a OUTROS personais).
-model PlanoConsultoria {
-  id          String  @id @default(uuid())
-  nome        String  @unique
-  descricao   String
-  precoMensal Decimal @db.Decimal(10, 2)
-
-  ativo    Boolean  @default(true)
-  criadoEm DateTime @default(now())
-
-  assinaturas Assinatura[]
-
-  @@map("planos_consultoria")
-}
-
-// O vinculo entre um Usuario e UM dos dois catalogos de plano acima.
-// Por que nao 2 tabelas (AssinaturaAluno / AssinaturaConsultoria)? Porque o
-// ciclo de vida (status, datas de renovacao, pagamento) e identico nos dois
-// casos — so o catalogo de origem muda. Duas FKs opcionais + a regra "exatamente
-// uma delas preenchida" e validada na Fase 3 (camada de aplicacao) resolve sem
-// duplicar logica de renovacao/cobranca em dois lugares.
 model Assinatura {
   id String @id @default(uuid())
 
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId String
 
-  planoAluno   PlanoAluno? @relation(fields: [planoAlunoId], references: [id])
-  planoAlunoId String?
+  plano   Plano  @relation(fields: [planoId], references: [id])
+  planoId String
 
-  planoConsultoria   PlanoConsultoria? @relation(fields: [planoConsultoriaId], references: [id])
-  planoConsultoriaId String?
-
-  status               StatusAssinatura @default(ATIVA)
+  status               StatusAssinatura @default(PENDENTE)
   dataInicio           DateTime         @default(now())
   dataProximaRenovacao DateTime
   renovacaoAutomatica  Boolean          @default(true)
