@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Paleta "VC Personal" — a mesma usada no blueprint da Etapa 1, agora como
+/* Paleta "Victor Carvalho Personal" — a mesma usada no blueprint da Etapa 1, agora como
    tokens reais. Definida uma vez aqui, todas as paginas usam via classes
    Tailwind (bg-paper, text-ink, text-accent...) em vez de cor solta. */
 :root {

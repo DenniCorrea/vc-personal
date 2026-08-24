@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <main className="mx-auto flex min-h-[80vh] max-w-lg flex-col items-center justify-center gap-6 px-4 text-center">
       <p className="font-display text-sm font-semibold uppercase tracking-widest text-accent">
-        VC Personal
+        Victor Carvalho Personal
       </p>
       <h1 className="font-display text-4xl font-semibold text-ink sm:text-5xl">
         Treino e consultoria, no seu ritmo.

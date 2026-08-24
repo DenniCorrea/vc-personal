@@ -88,7 +88,7 @@ export default async function PaginaPlanos() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-12">
       <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-        VC Personal
+        Victor Carvalho Personal
       </p>
       <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
         {produto === "ALUNO" ? "Escolha seu plano" : "Escolha a mentoria"}

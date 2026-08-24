@@ -19,7 +19,7 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "VC Personal",
+  title: "Victor Carvalho Personal",
   description: "Área do aluno, do personal-parceiro e do admin do Victor Carvalho Personal.",
 };
 
