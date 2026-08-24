@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { exigirSessao } from "@/lib/auth-guard";
 import { solicitarExclusaoConta } from "./actions";
+import { TrocarSenhaForm } from "./TrocarSenhaForm";
 
 export default async function PaginaMeusDados() {
   await exigirSessao();
@@ -8,10 +9,16 @@ export default async function PaginaMeusDados() {
   return (
     <main className="mx-auto max-w-md px-4 py-12">
       <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-        Privacidade
+        Privacidade e segurança
       </p>
       <h1 className="mt-1 font-display text-3xl font-semibold text-ink">Seus dados</h1>
-      <p className="mt-2 text-ink-soft">
+
+      <div className="mt-6 rounded-lg border border-line bg-paper-raised p-4">
+        <p className="text-sm font-medium text-ink">Trocar senha</p>
+        <TrocarSenhaForm />
+      </div>
+
+      <p className="mt-8 text-ink-soft">
         Conforme a LGPD, você pode baixar tudo que guardamos sobre você, ou pedir a exclusão da
         sua conta.
       </p>

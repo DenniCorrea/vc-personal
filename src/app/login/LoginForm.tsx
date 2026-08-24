@@ -53,6 +53,10 @@ export function LoginForm() {
         >
           {pendente ? "Entrando..." : "Entrar"}
         </button>
+
+        <Link href="/esqueci-senha" className="text-sm text-ink-soft hover:text-ink">
+          Esqueci minha senha
+        </Link>
       </form>
 
       <p className="mt-6 text-sm text-ink-soft">

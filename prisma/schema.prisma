@@ -165,8 +165,9 @@ model Usuario {
   alertas               Alerta[]
   // Assinaturas de cortesia que ESSE usuario (um admin) concedeu pra outras
   // pessoas — nao e "as assinaturas dele", e um log de quem liberou o que.
-  assinaturasConcedidas Assinatura[]  @relation("AssinaturasConcedidas")
+  assinaturasConcedidas Assinatura[]            @relation("AssinaturasConcedidas")
   logsAdmin             LogAdmin[]
+  tokensRecuperacao     TokenRecuperacaoSenha[]
 
   @@map("usuarios")
 }
@@ -575,4 +576,23 @@ model LogAdmin {
   criadoEm DateTime @default(now())
 
   @@map("logs_admin")
+}
+
+// Guarda so o HASH do token de recuperacao de senha, nunca o token em si —
+// mesma logica do cpfHash: se o banco vazar, ninguem consegue usar essas
+// linhas pra invadir uma conta. O token de verdade so existe no link que
+// vai por e-mail, nunca no banco.
+model TokenRecuperacaoSenha {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+
+  criadoEm DateTime @default(now())
+
+  @@map("tokens_recuperacao_senha")
 }
