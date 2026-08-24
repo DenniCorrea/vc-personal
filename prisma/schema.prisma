@@ -120,6 +120,7 @@ model Usuario {
   assinaturas  Assinatura[]
   agendamentos Agendamento[]
   pagamentos   Pagamento[]
+  treinos      Treino[]
 
   @@map("usuarios")
 }
@@ -327,5 +328,73 @@ model Video {
   ativo    Boolean  @default(true)
   criadoEm DateTime @default(now())
 
+  exerciciosVinculados Exercicio[]
+
   @@map("videos")
+}
+
+// Catalogo de exercicios — reutilizavel entre alunos. O que muda de pessoa
+// pra pessoa (series, repeticoes, carga) NAO fica aqui, fica na prescricao
+// (TreinoExercicio) — assim o mesmo "Agachamento livre" serve pra varios
+// alunos com numeros diferentes, sem duplicar a descricao/video/instrucoes.
+model Exercicio {
+  id String @id @default(uuid())
+
+  nome       String
+  descricao  String?
+  instrucoes String?
+  cuidados   String?
+
+  video   Video?  @relation(fields: [videoId], references: [id])
+  videoId String?
+
+  ativo    Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  prescricoes TreinoExercicio[]
+
+  @@map("exercicios")
+}
+
+// A ficha de treino de UM aluno especifico. Diferente de Plano/Horario/Video
+// (que controlam acesso por `produto`), aqui o controle e por DONO — o aluno
+// so ve o proprio Treino, nunca o de outro aluno.
+model Treino {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  nome  String // ex: "Treino A - Superior"
+  ativo Boolean @default(true)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  exercicios TreinoExercicio[]
+
+  @@map("treinos")
+}
+
+// A prescricao em si: ESSE exercicio, NESSE treino, com ESSES numeros.
+// Series/repeticoes/carga/descanso ficam como texto livre de proposito —
+// "8 a 12", "peso corporal", "60s" sao formas reais de prescrever que um
+// numero fixo nao capturaria.
+model TreinoExercicio {
+  id String @id @default(uuid())
+
+  treino   Treino @relation(fields: [treinoId], references: [id], onDelete: Cascade)
+  treinoId String
+
+  exercicio   Exercicio @relation(fields: [exercicioId], references: [id])
+  exercicioId String
+
+  ordem       Int
+  series      Int?
+  repeticoes  String?
+  carga       String?
+  descanso    String?
+  observacoes String?
+
+  @@map("treino_exercicios")
 }

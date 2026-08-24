@@ -65,6 +65,18 @@ export default async function PaginaPainel() {
           >
             Gerenciar vídeos
           </Link>
+          <Link
+            href="/painel/admin/exercicios"
+            className="inline-block rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+          >
+            Gerenciar exercícios
+          </Link>
+          <Link
+            href="/painel/admin/treinos"
+            className="inline-block rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+          >
+            Gerenciar treinos
+          </Link>
         </div>
       )}
 
@@ -77,13 +89,18 @@ export default async function PaginaPainel() {
                 Status: {ROTULO_STATUS[assinatura.status] ?? assinatura.status}
               </p>
               {assinatura.status === "ATIVA" && (
-                <div className="mt-2 flex gap-4">
+                <div className="mt-2 flex flex-wrap gap-4">
                   <Link href="/painel/agenda" className="text-sm font-medium text-accent">
                     Ver agenda
                   </Link>
                   <Link href="/painel/videos" className="text-sm font-medium text-accent">
                     Ver vídeos
                   </Link>
+                  {session.user.role === "ALUNO" && (
+                    <Link href="/painel/treinos" className="text-sm font-medium text-accent">
+                      Ver treinos
+                    </Link>
+                  )}
                 </div>
               )}
             </>
