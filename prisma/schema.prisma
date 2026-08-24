@@ -31,6 +31,10 @@ enum Role {
 }
 
 enum StatusAssinatura {
+  // Escolheu o plano mas ainda nao pagou — o pagamento (Fase 5) e quem muda
+  // isso pra ATIVA. Antes da Fase 5 existir, e o estado final mesmo (nao tem
+  // cobranca de verdade rodando ainda).
+  PENDENTE
   ATIVA
   ATRASADA
   CANCELADA

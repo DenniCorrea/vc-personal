@@ -1,11 +1,21 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { sair } from "./actions";
 
 const ROTULO_ROLE: Record<string, string> = {
   ALUNO: "Aluno",
   PERSONAL_PARCEIRO: "Personal Parceiro",
   ADMIN: "Administrador",
+};
+
+const ROTULO_STATUS: Record<string, string> = {
+  PENDENTE: "Pendente de pagamento",
+  ATIVA: "Ativa",
+  ATRASADA: "Atrasada",
+  CANCELADA: "Cancelada",
+  EXPIRADA: "Expirada",
 };
 
 export default async function PaginaPainel() {
@@ -18,6 +28,14 @@ export default async function PaginaPainel() {
     redirect("/login");
   }
 
+  const assinatura =
+    session.user.role !== "ADMIN"
+      ? await prisma.assinatura.findFirst({
+          where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA"] } },
+          include: { planoAluno: true, planoConsultoria: true },
+        })
+      : null;
+
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col justify-center px-4 py-12">
       <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
@@ -26,10 +44,39 @@ export default async function PaginaPainel() {
       <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
         Bem-vindo, {session.user.name}
       </h1>
-      <p className="mt-2 text-ink-soft">
-        Esta é a base do painel — cada fase seguinte (agendamento, treino, hábitos...)
-        vai adicionar o conteúdo real aqui, específico pro seu perfil.
-      </p>
+
+      {session.user.role === "ADMIN" && (
+        <div className="mt-6">
+          <Link
+            href="/painel/admin/planos"
+            className="inline-block rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
+          >
+            Gerenciar planos
+          </Link>
+        </div>
+      )}
+
+      {session.user.role !== "ADMIN" && (
+        <div className="mt-6 rounded-lg border border-line bg-paper-raised px-4 py-3">
+          {assinatura ? (
+            <>
+              <p className="font-medium text-ink">
+                {assinatura.planoAluno?.nome ?? assinatura.planoConsultoria?.nome}
+              </p>
+              <p className="text-sm text-ink-soft">
+                Status: {ROTULO_STATUS[assinatura.status] ?? assinatura.status}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-ink-soft">Você ainda não escolheu um plano.</p>
+              <Link href="/painel/planos" className="mt-2 inline-block text-sm font-medium text-accent">
+                Ver planos disponíveis
+              </Link>
+            </>
+          )}
+        </div>
+      )}
 
       <form action={sair} className="mt-8">
         <button
