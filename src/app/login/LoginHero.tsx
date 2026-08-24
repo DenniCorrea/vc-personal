@@ -55,7 +55,7 @@ export function LoginHero() {
         >
           <span
             className="font-display select-none leading-none"
-            style={{ fontSize: "230px", color: "rgba(201,168,124,0.07)" }}
+            style={{ fontSize: "clamp(90px, 24vw, 230px)", color: "rgba(201,168,124,0.07)" }}
           >
             MÉTODO
           </span>
