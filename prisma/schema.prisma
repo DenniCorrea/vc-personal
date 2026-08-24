@@ -303,3 +303,29 @@ model Pagamento {
 
   @@map("pagamentos")
 }
+
+// O video em si fica hospedado no Vimeo — aqui so guardamos a referencia e
+// quem pode assistir. Video de exercicio (Fase 7) e video de mentoria (Fase
+// 8) vao APONTAR pra um Video daqui, em vez de duplicar essa logica de
+// acesso em cada um.
+model Video {
+  id      String  @id @default(uuid())
+  produto Produto // mesma regra do Plano/Horario: define quem pode ver
+
+  titulo    String
+  descricao String?
+
+  // ID do vídeo no Vimeo (o admin faz upload direto no site do Vimeo e cola
+  // aqui — nao construimos integracao de upload via API, sem ganho real
+  // nesse estagio). `vimeoHash` e o parametro de "link privado" do Vimeo:
+  // funciona em qualquer plano pago, e obscurece a URL (quem tem o link
+  // inteiro consegue assistir de qualquer lugar — nao e uma trava tao forte
+  // quanto a restricao por dominio do Vimeo Pro+, que exige plano melhor).
+  vimeoId   String
+  vimeoHash String?
+
+  ativo    Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  @@map("videos")
+}
