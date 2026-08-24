@@ -13,11 +13,17 @@ async function garantirPlano(usuarioId: string) {
   });
 }
 
+// Sem o preprocess, um <input type="number"> vazio ("") vira 0 depois do
+// z.coerce.number(), e ".positive()" rejeita 0 mesmo quando o campo so
+// foi deixado em branco de proposito.
+const numeroOpcional = () =>
+  z.preprocess((v) => (v === "" || v == null ? undefined : v), z.coerce.number().positive().optional());
+
 const refeicaoSchema = z.object({
   nome: z.string().trim().min(1),
   horario: z.string().trim().optional(),
   composicao: z.string().trim().min(1),
-  kcal: z.coerce.number().int().positive().optional(),
+  kcal: numeroOpcional(),
 });
 
 export async function adicionarRefeicao(usuarioId: string, formData: FormData) {
@@ -51,9 +57,9 @@ export async function removerRefeicao(usuarioId: string, refeicaoId: string) {
 }
 
 const metasSchema = z.object({
-  metaAguaLitros: z.coerce.number().positive().optional(),
-  metaSonoHoras: z.coerce.number().positive().optional(),
-  metaProteinaG: z.coerce.number().positive().optional(),
+  metaAguaLitros: numeroOpcional(),
+  metaSonoHoras: numeroOpcional(),
+  metaProteinaG: numeroOpcional(),
 });
 
 // As metas de agua/sono moram no Habito (mesma tabela que o app do aluno

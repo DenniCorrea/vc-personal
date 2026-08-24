@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { paraInputDate } from "@/lib/data";
+import { paraInputDate, formatarDataCurta } from "@/lib/data";
 import { registrarAvaliacao } from "../actions";
 
 const ROTULO_OBJETIVO: Record<string, string> = {
@@ -291,7 +291,7 @@ function RelatorioComparativo({
   return (
     <div className="rounded-[4px] border border-line bg-card-admin p-5">
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
-        Comparativo · {primeira.data.toLocaleDateString("pt-BR")} → {ultima.data.toLocaleDateString("pt-BR")}
+        Comparativo · {formatarDataCurta(primeira.data, true)} → {formatarDataCurta(ultima.data, true)}
       </p>
       <div className="mt-4 flex flex-col gap-2 text-[14px]">
         {primeira.peso != null && ultima.peso != null && (

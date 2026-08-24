@@ -7,6 +7,12 @@ import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { registrarLogAdmin } from "@/lib/log-admin";
 
+// Sem o preprocess, um <input type="number"> vazio ("") vira 0 depois do
+// z.coerce.number(), e ".positive()" rejeita 0 mesmo quando o campo so
+// foi deixado em branco de proposito (precoAvulso e opcional de verdade).
+const numeroOpcional = () =>
+  z.preprocess((v) => (v === "" || v == null ? undefined : v), z.coerce.number().positive().optional());
+
 const planoAlunoSchema = z.object({
   nome: z.string().trim().min(2),
   frequenciaSemanal: z.coerce.number().int().min(1).max(7),
@@ -16,7 +22,7 @@ const planoAlunoSchema = z.object({
     .transform((v) => (Array.isArray(v) ? v : [v]))
     .pipe(z.array(z.enum(["VIDEO", "PRESENCIAL", "DISTANCIA"])).min(1)),
   preco: z.coerce.number().positive(),
-  precoAvulso: z.coerce.number().positive().optional(),
+  precoAvulso: numeroOpcional(),
   beneficios: z.string().optional(),
 });
 
@@ -24,7 +30,7 @@ const planoMentoriaSchema = z.object({
   nome: z.string().trim().min(2),
   descricao: z.string().trim().min(2),
   preco: z.coerce.number().positive(),
-  precoAvulso: z.coerce.number().positive().optional(),
+  precoAvulso: numeroOpcional(),
   beneficios: z.string().optional(),
 });
 

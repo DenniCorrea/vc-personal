@@ -35,7 +35,7 @@ export default async function PaginaNutricao() {
   return (
     <main className="px-6 pt-13 pb-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-        {hoje.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}
+        {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}
       </p>
       <h1 className="font-display mt-1 text-[28px] text-ink">Plano alimentar</h1>
 

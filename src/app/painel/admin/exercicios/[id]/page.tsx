@@ -66,6 +66,38 @@ export default async function PaginaExercicio({ params }: { params: Promise<{ id
         </label>
 
         <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+          Grupo muscular principal
+          <input
+            name="grupoMuscularPrincipal"
+            defaultValue={exercicio?.grupoMuscularPrincipal ?? ""}
+            placeholder="ex: Peitoral"
+            className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+          Grupos musculares secundários
+          <input
+            name="gruposMuscularesSecundarios"
+            defaultValue={exercicio?.gruposMuscularesSecundarios.join(", ") ?? ""}
+            placeholder="ex: Tríceps, Deltoide anterior (separados por vírgula)"
+            className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+          Imagem anatômica
+          {exercicio?.imagemAnatomica && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={exercicio.imagemAnatomica} alt="" className="h-24 w-16 rounded object-cover" />
+          )}
+          <input type="file" name="imagemAnatomica" accept="image/*" className="text-sm text-ink-soft" />
+          <span className="text-xs font-normal text-ink-soft">
+            A mesma imagem padrão que aparece nos aparelhos, mostrando o grupo muscular trabalhado.
+          </span>
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
           Vídeo padrão
           <select
             name="videoId"

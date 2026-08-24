@@ -20,11 +20,7 @@ const PRODUTO_POR_ROLE: Record<"ALUNO" | "PERSONAL_PARCEIRO", Produto> = {
   PERSONAL_PARCEIRO: "MENTORIA",
 };
 
-export default async function PaginaPlanos({
-  searchParams,
-}: {
-  searchParams: Promise<{ trocar?: string }>;
-}) {
+export default async function PaginaPlanos({ searchParams }: PageProps<"/painel/planos">) {
   const session = await exigirPapel("ALUNO", "PERSONAL_PARCEIRO");
   const { trocar } = await searchParams;
 
@@ -44,51 +40,71 @@ export default async function PaginaPlanos({
       orderBy: { preco: "asc" },
     });
     const acao = trocar ? trocarPlano : assinarPlano;
+    const indiceDestaque = planos.length >= 3 ? Math.floor(planos.length / 2) : -1;
 
     return (
-      <main className="mx-auto max-w-2xl px-4 py-12">
-        <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-          Victor Carvalho Personal
-        </p>
-        <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
-          {trocar ? "Escolha o novo plano" : produto === "ALUNO" ? "Escolha seu plano" : "Escolha a mentoria"}
+      <main className="mx-auto max-w-3xl px-6 py-16">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Consultoria</p>
+        <h1 className="font-display mt-1 text-[34px] text-ink">
+          {trocar ? "Escolha o novo plano" : produto === "ALUNO" ? "Escolha sua frequência" : "Escolha a mentoria"}
         </h1>
-        <ul className="mt-8 flex flex-col gap-2">
-          {planos.map((plano) => (
-            <li
-              key={plano.id}
-              className="flex items-center justify-between rounded-lg border border-line bg-paper-raised px-4 py-3"
-            >
-              <div>
-                <p className="font-medium text-ink">{plano.nome}</p>
-                <p className="text-sm text-ink-soft">
-                  {produto === "ALUNO"
-                    ? `${plano.frequenciaSemanal}x/semana · ${formatoMoeda.format(Number(plano.preco))}/mês${
-                        plano.incluiNutricao ? " · com nutrição" : ""
-                      }`
-                    : `${formatoMoeda.format(Number(plano.preco))}/mês`}
+
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {planos.map((plano, indice) => {
+            const destaque = indice === indiceDestaque;
+            return (
+              <div
+                key={plano.id}
+                className="relative flex flex-col rounded-[4px] border p-5"
+                style={{
+                  borderColor: destaque ? "var(--color-accent)" : "var(--color-line)",
+                  background: destaque
+                    ? "linear-gradient(160deg, rgba(201,168,124,0.10), rgba(201,168,124,0.02))"
+                    : "var(--color-card)",
+                }}
+              >
+                {destaque && (
+                  <span className="absolute -top-2.5 left-4 rounded-[2px] bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-accent-ink">
+                    Mais escolhido
+                  </span>
+                )}
+                <p className="text-[15px] font-medium text-ink">{plano.nome}</p>
+                <p className="mt-2 text-[26px] font-semibold text-ink">
+                  {formatoMoeda.format(Number(plano.preco))}
+                  <span className="text-[13px] font-normal text-ink-soft">/mês</span>
                 </p>
+                {produto === "ALUNO" && (
+                  <p className="mt-1 text-[12px] text-ink-soft">
+                    {plano.frequenciaSemanal}x/semana{plano.incluiNutricao && " · com nutrição"}
+                  </p>
+                )}
                 {plano.beneficios.length > 0 && (
-                  <ul className="mt-1 text-xs text-ink-soft">
+                  <ul className="mt-4 flex flex-col gap-1.5 text-[12px] leading-[1.6] text-ink-soft">
                     {plano.beneficios.map((beneficio) => (
-                      <li key={beneficio}>• {beneficio}</li>
+                      <li key={beneficio}>· {beneficio}</li>
                     ))}
                   </ul>
                 )}
+                <form action={acao.bind(null, plano.id)} className="mt-5">
+                  <button
+                    type="submit"
+                    className="w-full rounded-[2px] py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em]"
+                    style={{
+                      background: destaque ? "var(--color-accent)" : "transparent",
+                      color: destaque ? "var(--color-accent-ink)" : "var(--color-ink)",
+                      border: destaque ? "none" : "1px solid var(--color-line)",
+                    }}
+                  >
+                    {trocar ? "Trocar pra esse" : "Assinar"}
+                  </button>
+                </form>
               </div>
-              <form action={acao.bind(null, plano.id)}>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink"
-                >
-                  {trocar ? "Trocar pra esse" : "Assinar"}
-                </button>
-              </form>
-            </li>
-          ))}
-          {planos.length === 0 && <p className="text-sm text-ink-soft">Nenhum plano disponível ainda.</p>}
-        </ul>
-        <Link href="/painel/planos" className="mt-8 inline-block text-sm text-ink-soft hover:text-ink">
+            );
+          })}
+          {planos.length === 0 && <p className="text-[13px] text-ink-soft">Nenhum plano disponível ainda.</p>}
+        </div>
+
+        <Link href="/painel" className="mt-10 inline-block text-[13px] text-ink-soft hover:text-ink">
           ← {trocar ? "Cancelar troca" : "Voltar"}
         </Link>
       </main>
@@ -103,61 +119,69 @@ export default async function PaginaPlanos({
     (assinaturaAtual.status === "PENDENTE" || assinaturaAtual.status === "ATRASADA");
 
   return (
-    <main className="mx-auto max-w-md px-4 py-12">
-      <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-        Sua assinatura
-      </p>
-      <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
-        {assinaturaAtual.plano.nome}
-      </h1>
-      <p className="mt-2 text-ink-soft">
+    <main className="mx-auto max-w-md px-6 py-16">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Checkout</p>
+      <h1 className="font-display mt-1 text-[30px] text-ink">{assinaturaAtual.plano.nome}</h1>
+      <p className="mt-2 text-[13px] text-ink-soft">
         Status: {ROTULO_STATUS[assinaturaAtual.status] ?? assinaturaAtual.status}
         {assinaturaAtual.cortesia && " · Cortesia"}
       </p>
+
       {precisaPagar && (
-        <div className="mt-4 flex flex-col gap-2">
-          <p className="text-sm text-ink-soft">Escolha como pagar:</p>
-          <div className="flex flex-wrap gap-2">
-            <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "PIX")}>
-              <button
-                type="submit"
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink"
-              >
-                Pix (6% off)
-              </button>
-            </form>
-            <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "CARTAO")}>
-              <button
-                type="submit"
-                className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
-              >
-                Cartão (mensalidade automática)
-              </button>
-            </form>
-            <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "DEBITO")}>
-              <button
-                type="submit"
-                className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink hover:border-accent"
-              >
-                Débito
-              </button>
-            </form>
-          </div>
+        <div className="mt-6 flex flex-col gap-2">
+          <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-ink-subtle">Forma de pagamento</p>
+
+          <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "PIX")}>
+            <button
+              type="submit"
+              className="flex w-full items-center justify-between rounded-[2px] border border-accent-border bg-accent-wash px-4 py-3 text-left"
+            >
+              <span>
+                <span className="block text-[14px] text-ink">Pix</span>
+                <span className="block text-[12px] text-ink-soft">Aprovação imediata</span>
+              </span>
+              <span className="rounded-[2px] bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-ink">
+                6% off
+              </span>
+            </button>
+          </form>
+
+          <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "CARTAO")}>
+            <button
+              type="submit"
+              className="flex w-full items-center justify-between rounded-[2px] border border-line px-4 py-3 text-left hover:border-accent-border"
+            >
+              <span className="text-[14px] text-ink">Cartão de crédito</span>
+              <span className="text-[12px] text-ink-soft">mensalidade automática</span>
+            </button>
+          </form>
+
+          <form action={iniciarPagamentoAssinatura.bind(null, assinaturaAtual.id, "DEBITO")}>
+            <button
+              type="submit"
+              className="flex w-full items-center justify-between rounded-[2px] border border-line px-4 py-3 text-left hover:border-accent-border"
+            >
+              <span className="text-[14px] text-ink">Débito</span>
+              <span className="text-[12px] text-ink-soft">à vista</span>
+            </button>
+          </form>
+
+          <p className="mt-1 text-[12px] text-ink-faint">Renovação mensal. Cancele quando quiser, sem multa.</p>
         </div>
       )}
 
       <div className="mt-6 flex gap-4">
-        <Link href="/painel/planos?trocar=1" className="text-sm font-medium text-accent">
+        <Link href="/painel/planos?trocar=1" className="text-[13px] font-medium text-accent">
           Trocar de plano
         </Link>
         <form action={cancelarMinhaAssinatura}>
-          <button type="submit" className="text-sm text-warn hover:underline">
+          <button type="submit" className="text-[13px] text-warn hover:underline">
             Cancelar assinatura
           </button>
         </form>
       </div>
 
-      <Link href="/painel" className="mt-8 inline-block text-sm text-ink-soft hover:text-ink">
+      <Link href="/painel" className="mt-8 inline-block text-[13px] text-ink-soft hover:text-ink">
         ← Voltar pro painel
       </Link>
     </main>

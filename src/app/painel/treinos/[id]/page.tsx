@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { hojeData } from "@/lib/data";
+import { hojeData, formatarDataCurta } from "@/lib/data";
 import { VimeoPlayer } from "@/components/VimeoPlayer";
 import { registrarSerie } from "../actions";
 
@@ -128,7 +128,7 @@ export default async function PaginaExecucaoTreino({ params }: PageProps<"/paine
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Registrar hoje</p>
                 {dataUltimaExecucao && (
                   <p className="text-[12px] text-ink-faint">
-                    Último: {dataUltimaExecucao.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                    Último: {formatarDataCurta(dataUltimaExecucao)}
                   </p>
                 )}
               </div>

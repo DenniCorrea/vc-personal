@@ -5,14 +5,21 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 
+// Campo numerico opcional vindo de um <input type="number"> que pode
+// chegar vazio ("") — sem o preprocess, z.coerce.number() transforma ""
+// em 0, e ".positive()" rejeita 0 mesmo quando o campo so foi deixado em
+// branco de proposito.
+const numeroOpcional = () =>
+  z.preprocess((v) => (v === "" || v == null ? undefined : v), z.coerce.number().positive().optional());
+
 const avaliacaoSchema = z.object({
   data: z.string().min(1),
-  peso: z.coerce.number().positive().optional(),
-  altura: z.coerce.number().positive().optional(),
-  percentualGordura: z.coerce.number().positive().optional(),
-  cintura: z.coerce.number().positive().optional(),
-  bracoDireito: z.coerce.number().positive().optional(),
-  coxa: z.coerce.number().positive().optional(),
+  peso: numeroOpcional(),
+  altura: numeroOpcional(),
+  percentualGordura: numeroOpcional(),
+  cintura: numeroOpcional(),
+  bracoDireito: numeroOpcional(),
+  coxa: numeroOpcional(),
   observacoesNutricionais: z.string().trim().optional(),
 });
 
@@ -29,10 +36,15 @@ export async function registrarAvaliacao(usuarioId: string, formData: FormData) 
   if (parsed.bracoDireito) medidas["braço direito"] = parsed.bracoDireito;
   if (parsed.coxa) medidas.coxa = parsed.coxa;
 
+  // Constroi via Date.UTC a partir dos componentes do input (AAAA-MM-DD),
+  // igual o hojeData() em src/lib/data.ts — nao usar `new Date(str+"T00:00")`
+  // aqui, que depende do fuso do processo Node pra interpretar a hora local.
+  const [ano, mes, dia] = parsed.data.split("-").map(Number);
+
   await prisma.avaliacao.create({
     data: {
       usuarioId,
-      data: new Date(`${parsed.data}T00:00`),
+      data: new Date(Date.UTC(ano, mes - 1, dia)),
       peso: parsed.peso ?? null,
       altura: parsed.altura ?? null,
       percentualGordura: parsed.percentualGordura ?? null,

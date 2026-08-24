@@ -98,7 +98,7 @@ export default async function PaginaAdminVisaoDoDia() {
   return (
     <main>
       <p className="text-[12px] text-ink-soft">
-        {hoje.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
+        {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
       </p>
       <div className="mt-1 flex items-center justify-between">
         <h1 className="font-display text-[34px] text-ink">Quem precisa da sua atenção hoje</h1>

@@ -9,7 +9,10 @@ cloudinary.config({
 // Recebe o arquivo direto da action (Server Actions recebem File do form),
 // sobe pro Cloudinary dentro de uma pasta por tipo, e devolve so a URL —
 // e a URL que guardamos no banco (Usuario.avatarUrl, FotoProgresso.url).
-export async function enviarImagem(arquivo: File, pasta: "avatares" | "fotos-progresso"): Promise<string> {
+export async function enviarImagem(
+  arquivo: File,
+  pasta: "avatares" | "fotos-progresso" | "anatomia",
+): Promise<string> {
   const bytes = await arquivo.arrayBuffer();
   const buffer = Buffer.from(bytes);
 

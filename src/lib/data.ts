@@ -19,3 +19,19 @@ export function paraInputDate(data: Date): string {
   const dia = String(data.getDate()).padStart(2, "0");
   return `${ano}-${mes}-${dia}`;
 }
+
+// "DD/MM" ou "DD/MM/AAAA" pra EXIBIR um campo @db.Date (Avaliacao.data,
+// ExecucaoExercicio.data, etc.). ATENCAO: usa os componentes UTC, NAO os
+// locais — diferente do paraInputDate acima. A diferenca importa: um
+// @db.Date do Postgres nao tem hora nem fuso, e o driver do Prisma sempre
+// devolve esse valor como meia-noite UTC. Se o processo Node estiver rodando
+// num fuso atras de UTC (Brasil, UTC-3 — o caso do dev local), ler esse
+// valor com getters LOCAIS mostra o dia ANTERIOR. `paraInputDate` funciona
+// com getters locais porque so e usado em campos DateTime de verdade
+// (publicadoEm), onde "hora local" faz sentido — aqui nao ha hora nenhuma
+// pra converter, entao os getters UTC sao os certos.
+export function formatarDataCurta(data: Date, comAno = false): string {
+  const dia = String(data.getUTCDate()).padStart(2, "0");
+  const mes = String(data.getUTCMonth() + 1).padStart(2, "0");
+  return comAno ? `${dia}/${mes}/${data.getUTCFullYear()}` : `${dia}/${mes}`;
+}
