@@ -116,10 +116,12 @@ export async function DashboardAluno({ usuarioId, nome }: { usuarioId: string; n
 
       {assinatura && treinoHoje ? (
         <section className="mt-5 rounded-[4px] border border-line bg-card p-5">
-          <div className="flex items-baseline justify-between">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Treino de hoje</p>
             {assinatura.plano.frequenciaSemanal && (
-              <p className="text-[12px] text-ink-soft">Plano {assinatura.plano.frequenciaSemanal}x/semana</p>
+              <p className="whitespace-nowrap text-[12px] text-ink-soft">
+                Plano {assinatura.plano.frequenciaSemanal}x/semana
+              </p>
             )}
           </div>
           <h2 className="mt-1 text-[22px] font-semibold text-ink">{treinoHoje.nome}</h2>
