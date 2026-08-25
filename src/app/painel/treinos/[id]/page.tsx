@@ -133,12 +133,18 @@ export default async function PaginaExecucaoTreino({ params }: PageProps<"/paine
                 )}
               </div>
 
-              <div className="mt-3 grid grid-cols-[36px_1fr_1fr_64px] items-center gap-x-2 gap-y-2 text-[11px] uppercase tracking-wide text-ink-subtle">
+              <div className="mt-3 grid grid-cols-[24px_1fr_1fr_52px_40px] items-center gap-x-2 text-[10px] uppercase tracking-wide text-ink-subtle">
                 <span>Sér</span>
-                <span>Carga (kg)</span>
+                <span>Carga</span>
                 <span>Reps</span>
                 <span>Antes</span>
+                <span />
+              </div>
 
+              {/* Cada serie e o proprio grid (nao "display:contents" num
+                  <form> — esse truque quebra em Safari/mobile, saia
+                  desalinhado). Uma linha, um form, um grid so, sem magia. */}
+              <div className="mt-1 flex flex-col divide-y divide-line">
                 {Array.from({ length: Math.max(prescricao.series ?? 1, seriesAnteriores.length, seriesHoje.length, 1) }).map(
                   (_, i) => {
                     const numeroSerie = i + 1;
@@ -148,7 +154,7 @@ export default async function PaginaExecucaoTreino({ params }: PageProps<"/paine
                       <form
                         key={numeroSerie}
                         action={registrarSerie.bind(null, treino.id)}
-                        className="contents"
+                        className="grid grid-cols-[24px_1fr_1fr_52px_40px] items-center gap-x-2 py-2"
                       >
                         <input type="hidden" name="exercicioId" value={prescricao.exercicioId} />
                         <input type="hidden" name="numeroSerie" value={numeroSerie} />
@@ -159,7 +165,7 @@ export default async function PaginaExecucaoTreino({ params }: PageProps<"/paine
                           step="0.5"
                           inputMode="decimal"
                           defaultValue={registroHoje?.carga ?? undefined}
-                          className="rounded-[2px] border px-3 py-2.5 text-[17px] font-semibold text-ink outline-none"
+                          className="min-w-0 rounded-[2px] border px-2 py-2.5 text-[16px] font-semibold text-ink outline-none"
                           style={{ background: "var(--color-input)", borderColor: "rgba(237,233,227,0.14)" }}
                         />
                         <input
@@ -167,17 +173,20 @@ export default async function PaginaExecucaoTreino({ params }: PageProps<"/paine
                           type="number"
                           inputMode="numeric"
                           defaultValue={registroHoje?.repeticoes ?? undefined}
-                          className="rounded-[2px] border px-3 py-2.5 text-[17px] font-semibold text-ink outline-none"
+                          className="min-w-0 rounded-[2px] border px-2 py-2.5 text-[16px] font-semibold text-ink outline-none"
                           style={{ background: "var(--color-input)", borderColor: "rgba(237,233,227,0.14)" }}
                         />
-                        <span className="font-mono text-[12px] text-ink-faint">
+                        <span className="truncate text-right font-mono text-[11px] text-ink-faint">
                           {registroAntes ? `${registroAntes.carga ?? "—"}×${registroAntes.repeticoes ?? "—"}` : "—"}
                         </span>
                         <button
                           type="submit"
-                          className="col-span-4 -mt-1 self-start text-[11px] font-medium text-accent"
+                          aria-label={`Salvar série ${numeroSerie}`}
+                          className="flex h-9 w-9 items-center justify-center justify-self-end rounded-[2px] text-accent hover:bg-accent-wash"
                         >
-                          Salvar série {numeroSerie}
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
                         </button>
                       </form>
                     );
