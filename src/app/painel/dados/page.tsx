@@ -1,50 +1,139 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/auth-guard";
-import { solicitarExclusaoConta, enviarAvatar } from "./actions";
+import { solicitarExclusaoConta } from "./actions";
 import { sair } from "../actions";
 import { TrocarSenhaForm } from "./TrocarSenhaForm";
+import { TrocarFotoForm } from "./TrocarFotoForm";
+
+const formatoData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+const formatoMoeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+const ROTULO_METODO: Record<string, string> = { CARTAO: "Cartão", DEBITO: "Débito", PIX: "Pix" };
 
 export default async function PaginaMeusDados() {
   const session = await exigirSessao();
-  const usuario = await prisma.usuario.findUnique({
-    where: { id: session.user.id },
-    select: { nome: true, avatarUrl: true },
-  });
+  const ehAluno = session.user.role !== "ADMIN";
+
+  const [usuario, assinatura, ultimaAvaliacao, anamnese, habitoAgua, habitoSono] = await Promise.all([
+    prisma.usuario.findUnique({
+      where: { id: session.user.id },
+      select: { nome: true, email: true, telefone: true, avatarUrl: true, criadoEm: true },
+    }),
+    ehAluno
+      ? prisma.assinatura.findFirst({
+          where: { usuarioId: session.user.id, status: { in: ["ATIVA", "PENDENTE", "ATRASADA"] } },
+          include: { plano: true, pagamentos: { orderBy: { criadoEm: "desc" }, take: 1 } },
+        })
+      : null,
+    ehAluno
+      ? prisma.avaliacao.findFirst({ where: { usuarioId: session.user.id }, orderBy: { data: "desc" } })
+      : null,
+    ehAluno ? prisma.anamnese.findUnique({ where: { usuarioId: session.user.id } }) : null,
+    ehAluno
+      ? prisma.habito.findUnique({ where: { usuarioId_tipo: { usuarioId: session.user.id, tipo: "AGUA" } } })
+      : null,
+    ehAluno
+      ? prisma.habito.findUnique({ where: { usuarioId_tipo: { usuarioId: session.user.id, tipo: "SONO" } } })
+      : null,
+  ]);
 
   return (
     <main className="mx-auto max-w-md px-6 pt-cabecalho-aluno pb-10">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-        Privacidade e segurança
-      </p>
-      <h1 className="font-display mt-1 text-[28px] text-ink">Seus dados</h1>
-
-      <section className="mt-6 flex items-center gap-4 rounded-[4px] border border-line bg-card p-5">
+      <div className="flex items-center gap-4">
         {usuario?.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={usuario.avatarUrl}
             alt=""
-            className="h-14 w-14 shrink-0 rounded-full border border-accent object-cover"
+            className="h-16 w-16 shrink-0 rounded-full border border-accent object-cover"
           />
         ) : (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-accent text-lg text-accent">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-accent text-xl text-accent">
             {usuario?.nome.charAt(0).toUpperCase()}
           </div>
         )}
-        <form action={enviarAvatar} className="flex flex-col gap-1.5">
-          <input
-            type="file"
-            name="avatar"
-            accept="image/*"
-            required
-            className="text-[12px] text-ink-soft file:mr-2 file:rounded-[2px] file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-[11px] file:font-semibold file:uppercase file:text-accent-ink"
-          />
-          <button type="submit" className="self-start text-[12px] font-medium text-accent">
-            Salvar foto
-          </button>
-        </form>
-      </section>
+        <div className="min-w-0">
+          <h1 className="font-display truncate text-[24px] text-ink">{usuario?.nome}</h1>
+          {usuario?.criadoEm && (
+            <p className="text-[13px] text-ink-soft">
+              {ehAluno ? "Aluno" : "Consultor"} desde {formatoData.format(usuario.criadoEm)}
+            </p>
+          )}
+          <TrocarFotoForm />
+        </div>
+      </div>
+
+      {ehAluno && assinatura && (
+        <section
+          className="mt-6 rounded-[4px] border border-accent-border p-5"
+          style={{ background: "linear-gradient(160deg, rgba(201,168,124,0.08), rgba(201,168,124,0.02))" }}
+        >
+          <div className="flex items-baseline justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Plano ativo</p>
+            <p className="text-[12px] text-ink-faint">
+              Renova em {formatoData.format(assinatura.dataProximaRenovacao)}
+            </p>
+          </div>
+          <p className="mt-1 text-[19px] font-semibold text-ink">{assinatura.plano.nome}</p>
+          <p className="mt-0.5 text-[13px] text-ink-soft">
+            {formatoMoeda.format(Number(assinatura.plano.preco))}/mês
+            {assinatura.pagamentos[0] && ` · ${ROTULO_METODO[assinatura.pagamentos[0].metodo]}`}
+            {assinatura.cortesia && " · Cortesia"}
+          </p>
+          <div className="mt-4 flex gap-2.5">
+            <Link
+              href="/painel/planos?trocar=1"
+              className="rounded-[2px] border border-line px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink hover:border-accent-border"
+            >
+              Mudar plano
+            </Link>
+            <Link
+              href="/painel/planos"
+              className="rounded-[2px] border border-accent-border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent"
+            >
+              Pagamentos
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {ehAluno && (
+        <section className="mt-4 rounded-[4px] border border-line bg-card p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Meus dados</p>
+          <div className="mt-3 flex flex-col divide-y divide-line">
+            <LinhaDado rotulo="E-mail" valor={usuario?.email ?? "—"} />
+            <LinhaDado rotulo="Telefone" valor={usuario?.telefone ?? "—"} />
+            <LinhaDado
+              rotulo="Altura · peso"
+              valor={
+                ultimaAvaliacao?.altura || ultimaAvaliacao?.peso
+                  ? `${ultimaAvaliacao.altura ? `${ultimaAvaliacao.altura} cm` : "—"} · ${ultimaAvaliacao.peso ? `${ultimaAvaliacao.peso} kg` : "—"}`
+                  : "—"
+              }
+            />
+            <div className="flex items-center justify-between py-2.5 text-[14px]">
+              <span className="text-ink-soft">Anamnese</span>
+              <Link href="/painel/anamnese" className="font-medium text-accent">
+                {anamnese ? "Revisar" : "Responder"}
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {ehAluno && (habitoAgua || habitoSono) && (
+        <section className="mt-4 rounded-[4px] border border-line bg-card p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Metas diárias</p>
+          <div className="mt-3 flex flex-col divide-y divide-line">
+            {habitoAgua && <LinhaDado rotulo="Água" valor={`${habitoAgua.metaValor} L`} />}
+            {habitoSono && <LinhaDado rotulo="Sono" valor={`${habitoSono.metaValor}h`} />}
+          </div>
+          <p className="mt-3 text-[12px] text-ink-faint">
+            Definidas pelo Victor. Fale com ele para ajustar.
+          </p>
+        </section>
+      )}
 
       <section className="mt-4 rounded-[4px] border border-line bg-card p-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Trocar senha</p>
@@ -87,7 +176,7 @@ export default async function PaginaMeusDados() {
         </form>
       </section>
 
-      {session.user.role !== "ADMIN" && (
+      {ehAluno && (
         <section className="mt-4 rounded-[4px] border border-line bg-card p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Outros acessos</p>
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
@@ -120,5 +209,14 @@ export default async function PaginaMeusDados() {
         ← Voltar pro painel
       </Link>
     </main>
+  );
+}
+
+function LinhaDado({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <div className="flex items-center justify-between py-2.5 text-[14px]">
+      <span className="text-ink-soft">{rotulo}</span>
+      <span className="font-medium text-ink">{valor}</span>
+    </div>
   );
 }
