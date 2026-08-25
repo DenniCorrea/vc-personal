@@ -29,7 +29,7 @@ export default async function PaginaAgenda() {
 
   if (!assinatura) {
     return (
-      <main className="mx-auto max-w-md px-6 pt-13 pb-10">
+      <main className="mx-auto max-w-md px-6 pt-cabecalho-aluno pb-10">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Agenda</p>
         <h1 className="font-display mt-1 text-[26px] text-ink">Você ainda não tem uma assinatura ativa</h1>
         <p className="mt-2 text-[14px] text-ink-soft">
@@ -84,7 +84,7 @@ export default async function PaginaAgenda() {
   const excedeuLimite = usoSemana >= limite;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pt-13 pb-10">
+    <main className="mx-auto max-w-2xl px-6 pt-cabecalho-aluno pb-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Agenda</p>
       <h1 className="font-display mt-1 text-[26px] text-ink">
         {usoSemana} de {limite} sessões usadas essa semana

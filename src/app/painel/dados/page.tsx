@@ -13,7 +13,7 @@ export default async function PaginaMeusDados() {
   });
 
   return (
-    <main className="mx-auto max-w-md px-6 pt-13 pb-10">
+    <main className="mx-auto max-w-md px-6 pt-cabecalho-aluno pb-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
         Privacidade e segurança
       </p>

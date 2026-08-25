@@ -50,10 +50,33 @@
   --font-display: var(--font-instrument-serif);
 }
 
+html {
+  color-scheme: dark;
+}
+
 body {
   background: var(--color-paper);
   color: var(--color-ink-body);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  /* Evita o pull-to-refresh acidental no meio do registro de treino, e o
+     realce azul de toque do Android/iOS que nao combina com o visual —
+     regras do RESPONSIVE.md (Metodo Lider). */
+  overscroll-behavior-y: contain;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Padding-top do header nas telas do aluno: 20px + a faixa do notch/status
+   bar do celular. Usado em vez de um valor fixo (pt-13) pra nao ficar
+   colado atras do notch em iPhones com ele. */
+.pt-cabecalho-aluno {
+  padding-top: calc(20px + env(safe-area-inset-top));
+}
+
+/* Espaco reservado no fim do conteudo do aluno pra bottom nav fixa nao
+   cobrir o ultimo card — 88px de altura da barra + a safe area do home
+   indicator do iPhone. */
+.pb-bottom-nav {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
 /* Raio: 2px em botao/input/chip/badge, 4px em card/tabela, 6px em containers

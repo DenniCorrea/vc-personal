@@ -20,7 +20,7 @@ export default async function PaginaAlertas() {
   });
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pt-13 pb-10">
+    <main className="mx-auto max-w-2xl px-6 pt-cabecalho-aluno pb-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Alertas</p>
       <h1 className="font-display mt-1 text-[26px] text-ink">Seus avisos</h1>
 

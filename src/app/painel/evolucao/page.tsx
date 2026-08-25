@@ -51,7 +51,7 @@ export default async function PaginaEvolucao() {
   const chavesMedidas = [...new Set([...Object.keys(medidasIniciais), ...Object.keys(medidasAtuais)])];
 
   return (
-    <main className="px-6 pt-13 pb-10">
+    <main className="px-6 pt-cabecalho-aluno pb-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Sua evolução</p>
       <h1 className="font-display mt-1 text-[28px] text-ink">Progresso</h1>
 

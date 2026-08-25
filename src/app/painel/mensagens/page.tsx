@@ -13,7 +13,7 @@ export default async function PaginaMensagens() {
   await marcarMensagensComoLidas();
 
   return (
-    <main className="flex min-h-dvh flex-col px-6 pt-13 pb-28">
+    <main className="flex min-h-dvh flex-col px-6 pt-cabecalho-aluno pb-28">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Mensagens</p>
       <h1 className="font-display mt-1 text-[26px] text-ink">Victor Carvalho</h1>
       <p className="text-[12px] text-ink-faint">Responde em até 12h</p>
@@ -43,8 +43,8 @@ export default async function PaginaMensagens() {
 
       <form
         action={enviarMensagemAluno}
-        className="fixed inset-x-0 bottom-[76px] mx-auto flex max-w-[520px] items-center gap-2 border-t border-line px-4 py-3"
-        style={{ background: "rgba(16,15,13,0.94)" }}
+        className="fixed inset-x-0 mx-auto flex max-w-[520px] items-center gap-2 border-t border-line px-4 py-3"
+        style={{ background: "rgba(16,15,13,0.94)", bottom: "calc(76px + env(safe-area-inset-bottom))" }}
       >
         <input
           name="texto"

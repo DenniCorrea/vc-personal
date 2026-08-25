@@ -8,7 +8,7 @@ export default async function PaginaAnamnese() {
   const anamnese = await prisma.anamnese.findUnique({ where: { usuarioId: session.user.id } });
 
   return (
-    <main className="px-6 pt-13 pb-10">
+    <main className="px-6 pt-cabecalho-aluno pb-10">
       <div className="flex gap-1.5">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="h-[2px] flex-1 rounded-full" style={{ background: "var(--color-accent)" }} />

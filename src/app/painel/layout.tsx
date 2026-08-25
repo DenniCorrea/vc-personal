@@ -14,7 +14,7 @@ export default async function LayoutPainel({ children }: LayoutProps<"/painel">)
   }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-[520px] pb-24">
+    <div className="pb-bottom-nav mx-auto min-h-dvh max-w-[520px]">
       {children}
       <BottomNav />
     </div>

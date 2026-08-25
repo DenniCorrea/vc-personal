@@ -19,7 +19,7 @@ export default async function PaginaNutricao() {
 
   if (!plano || plano.refeicoes.length === 0) {
     return (
-      <main className="px-6 pt-13 pb-10">
+      <main className="px-6 pt-cabecalho-aluno pb-10">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Nutrição</p>
         <h1 className="font-display mt-1 text-[28px] text-ink">Plano alimentar</h1>
         <p className="mt-4 text-[14px] text-ink-soft">
@@ -33,7 +33,7 @@ export default async function PaginaNutricao() {
   const primeiraNaoFeita = plano.refeicoes.find((r) => r.checkins.length === 0);
 
   return (
-    <main className="px-6 pt-13 pb-10">
+    <main className="px-6 pt-cabecalho-aluno pb-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
         {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}
       </p>

@@ -82,7 +82,7 @@ export async function DashboardAluno({ usuarioId, nome }: { usuarioId: string; n
   const diaSemana = DIAS_SEMANA[new Date().getDay()];
 
   return (
-    <main className="px-6 pt-13 pb-6">
+    <main className="px-6 pt-cabecalho-aluno pb-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">{diaSemana}</p>

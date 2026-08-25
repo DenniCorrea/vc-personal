@@ -25,9 +25,13 @@ export function LoginHero() {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const y = container.scrollTop;
-        if (layer1Ref.current) layer1Ref.current.style.transform = `translateY(${Math.round(y * 0.1)}px)`;
-        if (layer2Ref.current) layer2Ref.current.style.transform = `translateY(${Math.round(y * 0.28)}px)`;
-        if (layer3Ref.current) layer3Ref.current.style.transform = `translateY(${Math.round(y * 0.45)}px)`;
+        // Amplitude reduzida a ~60% no mobile (RESPONSIVE.md) — o parallax
+        // fica mais discreto numa tela pequena, onde o movimento e mais
+        // perceptivel proporcionalmente.
+        const escala = window.innerWidth < 768 ? 0.6 : 1;
+        if (layer1Ref.current) layer1Ref.current.style.transform = `translateY(${Math.round(y * 0.1 * escala)}px)`;
+        if (layer2Ref.current) layer2Ref.current.style.transform = `translateY(${Math.round(y * 0.28 * escala)}px)`;
+        if (layer3Ref.current) layer3Ref.current.style.transform = `translateY(${Math.round(y * 0.45 * escala)}px)`;
       });
     };
 

@@ -38,6 +38,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0E0D0C",
+  colorScheme: "dark",
+  // viewport-fit=cover + env(safe-area-inset-*) sao obrigatorios (RESPONSIVE.md)
+  // pra bottom nav e barras fixas respeitarem o home indicator do iPhone.
+  viewportFit: "cover",
+  // Sem maximum-scale/user-scalable=no — quebra acessibilidade (RESPONSIVE.md).
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

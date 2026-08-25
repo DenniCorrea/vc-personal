@@ -11,7 +11,7 @@ export default async function PaginaTreinos() {
 
   if (!assinatura) {
     return (
-      <main className="px-6 pt-13 pb-10">
+      <main className="px-6 pt-cabecalho-aluno pb-10">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Treino</p>
         <h1 className="font-display mt-1 text-[28px] text-ink">Você ainda não tem acesso</h1>
         <p className="mt-2 text-[14px] text-ink-soft">Assine um plano pra ver sua ficha de treino.</p>
@@ -29,7 +29,7 @@ export default async function PaginaTreinos() {
   });
 
   return (
-    <main className="px-6 pt-13 pb-10">
+    <main className="px-6 pt-cabecalho-aluno pb-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Treino</p>
       <h1 className="font-display mt-1 text-[28px] text-ink">Sua ficha</h1>
 
