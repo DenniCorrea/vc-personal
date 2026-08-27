@@ -175,9 +175,17 @@ padrão:
   (`formatarDataCurta` em `src/lib/data.ts`); para gravar, usar
   `Date.UTC(ano, mes-1, dia)`. Campo `DateTime` de verdade (com hora) não
   tem esse problema e usa getters locais normalmente.
-- **Limite de 1MB da Server Action**: o padrão do Next.js barra qualquer
-  foto de celular. Já ajustado para 10mb em `next.config.ts` — qualquer
-  fluxo novo de upload depende disso.
+- **Limite de corpo da Server Action**: o padrão do Next.js (1MB) barra
+  qualquer foto de celular; já ajustado para 10mb em `next.config.ts`. Mas
+  aumentar o limite **não** é a solução: celular novo (48MP) passa dos 10MB
+  e o erro volta, agora como tela branca "This page couldn't load", porque
+  o Next rejeita a requisição **antes** do nosso código rodar — nenhuma
+  validação nossa consegue dar mensagem melhor nesse ponto.
+  **Todo upload de imagem passa por `reduzirImagem()`
+  (`src/lib/imagem-cliente.ts`) no navegador antes de enviar.** Isso resolve
+  o limite na origem, deixa o upload viável no 4G do aluno na academia,
+  economiza cota do Cloudinary, e ainda converte HEIC de iPhone em JPEG de
+  quebra. Medido: 11,79MB → 792KB.
 - **`display: contents` em `<form>`** para montar grid quebra no Safari
   mobile. Usar grid real por linha.
 - **Server Component não aceita handler de evento** (`onChange`, `onClick`).

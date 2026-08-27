@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { enviarFotoProgresso } from "./actions";
+import { EnviarFotoForm } from "./EnviarFotoForm";
 
 export default async function PaginaEvolucao() {
   const session = await exigirPapel("ALUNO");
@@ -139,28 +139,7 @@ export default async function PaginaEvolucao() {
           </p>
         </div>
 
-        <form action={enviarFotoProgresso} className="mt-3 flex flex-col gap-2">
-          <input
-            type="file"
-            name="foto"
-            accept="image/*"
-            required
-            className="text-[12px] text-ink-soft file:mr-3 file:rounded-[2px] file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-[11px] file:font-semibold file:uppercase file:text-accent-ink"
-          />
-          <input
-            type="text"
-            name="legenda"
-            placeholder="ex: semana 6 · frente"
-            className="rounded-[2px] border border-line px-3 py-2 text-[13px] text-ink outline-none focus:border-accent"
-            style={{ background: "var(--color-input)" }}
-          />
-          <button
-            type="submit"
-            className="self-start rounded-[2px] border border-accent-border px-4 py-2 text-[12px] font-medium text-accent"
-          >
-            Enviar foto
-          </button>
-        </form>
+        <EnviarFotoForm />
 
         {fotos.length > 0 && (
           <div className="mt-4 grid grid-cols-2 gap-2">
