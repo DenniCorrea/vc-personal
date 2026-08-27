@@ -795,14 +795,26 @@ model CheckinNutricional {
 
 // Foto de acompanhamento (handoff, tela 7 "Evolucao"). Guardada no
 // Cloudinary (plano gratuito) — aqui so a URL e a legenda.
+// Foto de progresso do aluno. Diferente das outras imagens do app, ESTA
+// NAO fica com URL publica no Cloudinary — e foto de corpo, o dado mais
+// sensivel que guardamos.
+//
+// Por isso nao existe campo `url` aqui: guardamos so o identificador
+// interno no Cloudinary (`publicId`), o arquivo la e do tipo
+// "authenticated" (caminho publico devolve 404), e quem entrega a imagem
+// pro navegador e a rota /api/fotos-progresso/[id], que confere sessao e
+// dono a cada acesso. Guardar a URL assinada no banco nao adiantaria: a
+// assinatura do Cloudinary nao expira, entao ela vazada uma vez vale pra
+// sempre — o controle tem que ser nosso, requisicao a requisicao.
 model FotoProgresso {
   id String @id @default(uuid())
 
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId String
 
-  url     String
-  legenda String? // ex: "semana 1 - frente"
+  publicId String // ex: "vc-personal/fotos-progresso/abc123"
+  formato  String // ex: "jpg" — o Cloudinary precisa disso pra montar a URL
+  legenda  String? // ex: "semana 1 - frente"
 
   criadoEm DateTime @default(now())
 

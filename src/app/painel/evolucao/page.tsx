@@ -166,8 +166,15 @@ export default async function PaginaEvolucao() {
           <div className="mt-4 grid grid-cols-2 gap-2">
             {fotos.map((foto) => (
               <div key={foto.id} className="overflow-hidden rounded-[2px] border border-line">
+                {/* Nao aponta pro Cloudinary: a foto vem por uma rota nossa
+                    que confere sessao e dono a cada acesso. Ver
+                    src/app/api/fotos-progresso/[id]/route.ts. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={foto.url} alt={foto.legenda ?? ""} className="h-[150px] w-full object-cover" />
+                <img
+                  src={`/api/fotos-progresso/${foto.id}`}
+                  alt={foto.legenda ?? ""}
+                  className="h-[150px] w-full object-cover"
+                />
                 {foto.legenda && (
                   <p className="px-2 py-1.5 font-mono text-[11px] text-ink-faint">{foto.legenda}</p>
                 )}

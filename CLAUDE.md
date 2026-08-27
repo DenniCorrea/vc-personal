@@ -187,6 +187,25 @@ padrão:
   pessoa precisa ler, retornar estado pelo `useActionState` em vez de
   `throw`.
 
+## Banco de dados — cuidado redobrado
+
+**Existe UM banco só, compartilhado entre desenvolvimento e produção.** Não
+há ambiente de teste separado. Decisão revista e mantida em 27/08/2026
+enquanto o app está em fase de teste — mas com atenção explícita a comandos
+destrutivos.
+
+- **Proibido** neste projeto: `prisma migrate reset`, `db push
+  --force-reset`, `DROP`, `TRUNCATE`, e qualquer `DELETE`/`deleteMany` sem
+  filtro. Não existe "só testar e ver no que dá" aqui.
+- Teste que escreve no banco limpa exatamente o que criou (filtrando pela
+  chave do próprio teste) e restaura o que sobrescreveu.
+- Antes de migration destrutiva (remover ou renomear coluna): conferir a
+  contagem de linhas primeiro e registrar isso na própria migration.
+  Migration segura em tabela vazia deixa de ser segura com dado dentro.
+- O Neon gratuito guarda só **24h** de histórico para restaurar.
+- Reabrir a conversa sobre separar dev de produção **antes do primeiro aluno
+  pagante entrar** — a decisão atual vale só para o período de teste.
+
 ## Antes de subir para produção
 
 1. `npx tsc --noEmit` — sem erro de tipo.

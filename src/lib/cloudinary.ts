@@ -18,16 +18,15 @@ const FORMATOS_CLOUDINARY = ["jpg", "jpeg", "png", "webp", "heic"];
 // cru do Next quando alguem manda um arquivo grande demais.
 const TAMANHO_MAXIMO = 10 * 1024 * 1024;
 
-// Recebe o arquivo direto da action (Server Actions recebem File do form),
-// valida, sobe pro Cloudinary dentro de uma pasta por tipo, e devolve so a
-// URL — e a URL que guardamos no banco (Usuario.avatarUrl, FotoProgresso.url).
-//
-// A validacao roda no servidor de proposito: o `accept="image/*"` do input
-// e so conveniencia de UX, qualquer um contorna isso mandando o POST direto.
-export async function enviarImagem(
-  arquivo: File,
-  pasta: "avatares" | "fotos-progresso" | "anatomia",
-): Promise<string> {
+type Visibilidade = "publica" | "privada";
+
+type ResultadoUpload = {
+  secure_url: string;
+  public_id: string;
+  format: string;
+};
+
+function validar(arquivo: File) {
   if (arquivo.size === 0) {
     throw new Error("Arquivo vazio.");
   }
@@ -43,16 +42,27 @@ export async function enviarImagem(
   if (arquivo.type && !TIPOS_PERMITIDOS.includes(arquivo.type as (typeof TIPOS_PERMITIDOS)[number])) {
     throw new Error("Formato não aceito. Use JPG, PNG, WEBP ou HEIC.");
   }
+}
+
+async function subir(
+  arquivo: File,
+  pasta: string,
+  visibilidade: Visibilidade,
+): Promise<ResultadoUpload> {
+  validar(arquivo);
 
   const bytes = await arquivo.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  const resultado = await new Promise<{ secure_url: string }>((resolve, reject) => {
+  return new Promise<ResultadoUpload>((resolve, reject) => {
     const upload = cloudinary.uploader.upload_stream(
       {
         folder: `vc-personal/${pasta}`,
+        // "authenticated" faz o caminho publico do Cloudinary devolver 404 —
+        // so uma URL assinada com nosso api_secret abre o arquivo.
+        type: visibilidade === "privada" ? "authenticated" : "upload",
         // Segunda barreira, agora do lado do Cloudinary: mesmo que o
-        // `arquivo.type` acima venha mentindo (ele vem do navegador), o
+        // `arquivo.type` venha mentindo (ele vem do navegador), o
         // Cloudinary olha o conteudo de verdade e recusa o que nao for
         // imagem nesses formatos. E ESSA a checagem que vale.
         resource_type: "image",
@@ -70,11 +80,51 @@ export async function enviarImagem(
           }
           return reject(erro ?? new Error("Falha no upload"));
         }
-        resolve(resultado);
+        resolve(resultado as ResultadoUpload);
       },
     );
     upload.end(buffer);
   });
+}
 
+// Imagem de acesso publico — avatar e imagem de anatomia do exercicio.
+// Devolve a URL, que e o que guardamos no banco.
+//
+// Por que essas podem ser publicas: a imagem de anatomia e ilustracao
+// generica (a mesma que ja existe em qualquer site de musculacao), e o
+// avatar e uma foto de rosto que a propria pessoa escolheu como
+// identificacao. Foto de progresso e outra conversa — ver abaixo.
+export async function enviarImagem(
+  arquivo: File,
+  pasta: "avatares" | "anatomia",
+): Promise<string> {
+  const resultado = await subir(arquivo, pasta, "publica");
   return resultado.secure_url;
+}
+
+// Foto de progresso: sobe como PRIVADA e devolve o identificador, nao a
+// URL. O caminho publico dessa imagem no Cloudinary passa a devolver 404;
+// quem entrega ela pro navegador e /api/fotos-progresso/[id], que confere
+// sessao e dono antes de servir os bytes.
+export async function enviarImagemPrivada(
+  arquivo: File,
+  pasta: "fotos-progresso",
+): Promise<{ publicId: string; formato: string }> {
+  const resultado = await subir(arquivo, pasta, "privada");
+  return { publicId: resultado.public_id, formato: resultado.format };
+}
+
+// Monta a URL assinada de uma imagem privada. Uso EXCLUSIVO do servidor:
+// a assinatura do Cloudinary nao expira, entao essa URL nunca pode chegar
+// ao navegador — se vazasse, valeria pra sempre e pra qualquer um. A rota
+// que serve a foto usa isso pra buscar os bytes e repassar, sem nunca
+// entregar o endereco em si.
+export function urlAssinadaPrivada(publicId: string, formato: string): string {
+  return cloudinary.url(publicId, {
+    type: "authenticated",
+    resource_type: "image",
+    format: formato,
+    sign_url: true,
+    secure: true,
+  });
 }

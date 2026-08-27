@@ -47,7 +47,21 @@ export async function GET() {
     return NextResponse.json({ erro: "não encontrado" }, { status: 404 });
   }
 
-  const dadosExportaveis = { ...usuario, senhaHash: undefined, cpfHash: undefined };
+  const dadosExportaveis = {
+    ...usuario,
+    senhaHash: undefined,
+    cpfHash: undefined,
+    // `publicId` sozinho nao serve pra pessoa: e um identificador interno do
+    // Cloudinary que ela nao consegue abrir. Troca pelo endereco do proprio
+    // app, que funciona enquanto ela estiver logada — e nao expoe a URL
+    // assinada do Cloudinary, que nao expira.
+    fotosProgresso: usuario.fotosProgresso.map((foto) => ({
+      id: foto.id,
+      legenda: foto.legenda,
+      criadoEm: foto.criadoEm,
+      endereco: `/api/fotos-progresso/${foto.id}`,
+    })),
+  };
 
   return new NextResponse(JSON.stringify(dadosExportaveis, null, 2), {
     headers: {
