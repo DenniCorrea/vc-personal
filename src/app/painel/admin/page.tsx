@@ -1,10 +1,18 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { exigirPapel } from "@/lib/auth-guard";
 import { hojeData } from "@/lib/data";
 
 const SEIS_SEMANAS_MS = 6 * 7 * 24 * 60 * 60 * 1000;
 
 export default async function PaginaAdminVisaoDoDia() {
+  // O layout.tsx desta pasta ja chama exigirPapel("ADMIN"), mas layout e
+  // page sao renderizados em PARALELO no App Router — as queries abaixo
+  // comecariam a rodar antes do redirect do layout acontecer. Repetir a
+  // checagem aqui e a mesma regra que todas as outras paginas /admin ja
+  // seguem: quem protege e a propria pagina, nunca so a casca em volta.
+  await exigirPapel("ADMIN");
+
   const hoje = hojeData();
   const seteDiasAtras = new Date(hoje);
   seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);

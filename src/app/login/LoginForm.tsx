@@ -11,10 +11,23 @@ export function LoginForm() {
   const [estado, formAction, pendente] = useActionState(entrar, estadoInicial);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/painel";
+  // Quem foi desconectado por ter a conta desativada chega aqui com esse
+  // parametro (ver src/app/api/sessao-encerrada/route.ts). Sem a mensagem,
+  // a pessoa so veria a tela de login de novo, sem entender o porque.
+  const contaInativa = searchParams.get("motivo") === "conta-inativa";
 
   return (
     <form action={formAction} className="mt-8 flex flex-col gap-5">
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
+
+      {contaInativa && (
+        <p
+          className="rounded-[2px] border px-3 py-2.5 text-[13px]"
+          style={{ borderColor: "var(--color-warn)", color: "var(--color-warn)" }}
+        >
+          Sua conta está desativada. Fale com o Victor para reativá-la.
+        </p>
+      )}
 
       <label className="flex flex-col gap-2 text-[15px] text-ink">
         E-mail

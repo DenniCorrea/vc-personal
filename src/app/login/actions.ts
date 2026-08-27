@@ -2,6 +2,7 @@
 
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
+import { estaBloqueado, LIMITES } from "@/lib/rate-limit";
 
 export type EstadoLogin = {
   erro?: string;
@@ -11,6 +12,17 @@ export async function entrar(
   _estadoAnterior: EstadoLogin,
   formData: FormData,
 ): Promise<EstadoLogin> {
+  // A trava de verdade esta no `authorize` (src/auth.ts) — la ela devolve
+  // null, que viraria a mensagem generica "e-mail ou senha incorretos" e
+  // deixaria a pessoa tentando pra sempre sem entender o que houve. Essa
+  // checagem aqui existe so pra dar a mensagem certa a quem foi bloqueado.
+  const email = String(formData.get("email") ?? "");
+  if (email && (await estaBloqueado("login", email))) {
+    return {
+      erro: `Muitas tentativas de login. Aguarde ${LIMITES.login.janelaMinutos} minutos e tente de novo, ou use "Esqueci minha senha".`,
+    };
+  }
+
   try {
     await signIn("credentials", {
       email: formData.get("email"),

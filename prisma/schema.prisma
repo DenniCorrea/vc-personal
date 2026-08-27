@@ -831,3 +831,21 @@ model Mensagem {
 
   @@map("mensagens")
 }
+
+// Tentativa de login/cadastro/recuperacao que FALHOU, usada pra limitar
+// forca bruta. Fica no banco (e nao em memoria) de proposito: a Render
+// reinicia o processo a cada deploy e derruba o servico quando fica ocioso
+// no plano free — um contador em memoria zeraria junto, que e exatamente o
+// que um atacante precisaria pra continuar tentando.
+//
+// `chave` e o alvo da tentativa (e-mail normalizado, prefixado pela acao),
+// nao o IP: IP muda facil e ainda seria dado pessoal a mais pra guardar.
+model TentativaAutenticacao {
+  id    String @id @default(uuid())
+  chave String
+
+  criadoEm DateTime @default(now())
+
+  @@index([chave, criadoEm])
+  @@map("tentativas_autenticacao")
+}

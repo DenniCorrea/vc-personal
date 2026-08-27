@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verificarSenha } from "@/lib/senha";
+import { estaBloqueado, registrarFalha, limparTentativas } from "@/lib/rate-limit";
 
 const credenciaisSchema = z.object({
   email: z.string().email(),
@@ -14,7 +15,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // conta/sessao no banco (fluxo OAuth). Como so temos login por e-mail+senha,
   // a sessao vira um JWT assinado (cookie), e quem confere a senha contra o
   // banco e o `authorize` abaixo, direto na nossa tabela `Usuario`.
-  session: { strategy: "jwt" },
+  // maxAge explicito: sem isso o padrao do Auth.js e 30 dias. 7 dias
+  // equilibra "nao pedir senha toda hora no celular" com "um cookie roubado
+  // nao vale um mes". `updateAge` renova o prazo a cada 24h de uso, entao
+  // quem abre o app regularmente nunca e deslogado na pratica.
+  session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60, updateAge: 24 * 60 * 60 },
   pages: {
     signIn: "/login",
   },
@@ -31,13 +36,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = credenciaisSchema.safeParse(credenciais);
         if (!parsed.success) return null;
 
+        // Trava de forca bruta. Fica AQUI, e nao so na action `entrar`,
+        // porque essa funcao e o unico caminho por onde uma senha e de fato
+        // conferida — quem manda o POST direto pra /api/auth/callback,
+        // pulando a tela de login, passa por aqui do mesmo jeito.
+        if (await estaBloqueado("login", parsed.data.email)) return null;
+
         const usuario = await prisma.usuario.findUnique({
           where: { email: parsed.data.email },
         });
-        if (!usuario || !usuario.ativo) return null;
+        // Conta inexistente e conta desativada contam como tentativa falha:
+        // sem isso, dava pra varrer e-mails a vontade pra descobrir quais
+        // existem, ja que so os inexistentes nunca bloqueariam.
+        if (!usuario || !usuario.ativo) {
+          await registrarFalha("login", parsed.data.email);
+          return null;
+        }
 
         const senhaValida = await verificarSenha(parsed.data.senha, usuario.senhaHash);
-        if (!senhaValida) return null;
+        if (!senhaValida) {
+          await registrarFalha("login", parsed.data.email);
+          return null;
+        }
+
+        // Acertou: zera o contador pra que erros anteriores nao sobrem
+        // pendurados e bloqueiem o proximo login legitimo.
+        await limparTentativas("login", parsed.data.email);
 
         return {
           id: usuario.id,

@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashSenha } from "@/lib/senha";
+import { estaBloqueado, registrarFalha } from "@/lib/rate-limit";
 
 // `role` aceita so ALUNO ou PERSONAL_PARCEIRO aqui de proposito — ADMIN
 // nunca e uma opcao no formulario publico. Mesmo que alguem manipule o
@@ -39,8 +40,16 @@ export async function cadastrar(
   }
   const { nome, email, senha, role } = parsed.data;
 
+  // Trava contra criacao de contas em massa por script. Conta por e-mail:
+  // uma pessoa real tentando de novo depois de errar algo nao chega perto
+  // do limite, mas um bot varrendo e-mails para no 5o.
+  if (await estaBloqueado("cadastro", email)) {
+    return { erro: "Muitas tentativas de cadastro. Tente novamente mais tarde." };
+  }
+
   const jaExiste = await prisma.usuario.findUnique({ where: { email } });
   if (jaExiste) {
+    await registrarFalha("cadastro", email);
     return { erro: "Ja existe uma conta com esse e-mail" };
   }
 

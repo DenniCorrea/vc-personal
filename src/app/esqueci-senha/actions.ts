@@ -4,6 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { enviarEmailRecuperacaoSenha } from "@/lib/email";
+import { estaBloqueado, registrarFalha } from "@/lib/rate-limit";
 
 export type EstadoEsqueciSenha = {
   enviado?: boolean;
@@ -18,6 +19,13 @@ export async function solicitarRecuperacaoSenha(
 ): Promise<EstadoEsqueciSenha> {
   const email = z.string().trim().email().safeParse(formData.get("email"));
   if (!email.success) return { enviado: true };
+
+  // Sem esse limite, dava pra usar o formulario como maquina de spam:
+  // enviar o mesmo e-mail de recuperacao centenas de vezes pra caixa de
+  // entrada de um aluno (e queimar nossa cota do Resend junto). Continua
+  // respondendo "enviado" mesmo bloqueado, pra nao revelar nada.
+  if (await estaBloqueado("recuperacaoSenha", email.data)) return { enviado: true };
+  await registrarFalha("recuperacaoSenha", email.data);
 
   const usuario = await prisma.usuario.findUnique({ where: { email: email.data, ativo: true } });
   if (usuario) {
