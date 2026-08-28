@@ -84,28 +84,29 @@ export default async function PaginaPlanosPublica() {
                     {formatoMoeda.format(noPix)} no Pix · 6% de desconto
                   </p>
 
+                  {/* Divisao de responsabilidade: sessoes e bonus sao
+                      DERIVADOS dos campos do plano (limiteAgendamentos,
+                      incluiBonus) — sao a verdade do sistema. `beneficios`
+                      e texto livre pro Victor escrever o que o sistema nao
+                      sabe. Ter as duas coisas dizendo a mesma coisa duplicou
+                      "1 sessao por mes" na tela (defeito visto em producao). */}
                   <ul className="mt-6 flex flex-1 flex-col gap-2.5">
-                    {plano.beneficios.map((b) => (
-                      <li key={b} className="flex items-start gap-2.5 text-[13.5px] leading-relaxed text-ink-soft">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent" />
-                        {b}
-                      </li>
-                    ))}
                     {plano.limiteAgendamentos != null && (
-                      <li className="flex items-start gap-2.5 text-[13.5px] leading-relaxed text-ink-soft">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent" />
+                      <ItemPlano incluido>
                         {plano.limiteAgendamentos >= 999
                           ? "Sessões 1-on-1 ilimitadas"
                           : `${plano.limiteAgendamentos} ${plano.limiteAgendamentos === 1 ? "sessão" : "sessões"} 1-on-1 por mês`}
-                      </li>
+                      </ItemPlano>
                     )}
+                    {plano.beneficios.map((b) => (
+                      <ItemPlano key={b} incluido>
+                        {b}
+                      </ItemPlano>
+                    ))}
                     {/* Item nao incluido: esmaecido, NUNCA riscado (handoff) */}
-                    {!plano.incluiBonus && (
-                      <li className="flex items-start gap-2.5 text-[13.5px] leading-relaxed text-ink-faint">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full" style={{ background: "var(--color-ink-faint)" }} />
-                        Masterclasses bônus
-                      </li>
-                    )}
+                    <ItemPlano incluido={plano.incluiBonus}>
+                      {plano.incluiBonus ? "Acesso a todas as masterclasses bônus" : "Masterclasses bônus"}
+                    </ItemPlano>
                   </ul>
 
                   <Link
@@ -137,5 +138,20 @@ export default async function PaginaPlanosPublica() {
         </div>
       </main>
     </div>
+  );
+}
+
+function ItemPlano({ incluido, children }: { incluido: boolean; children: React.ReactNode }) {
+  return (
+    <li
+      className="flex items-start gap-2.5 text-[13.5px] leading-relaxed"
+      style={{ color: incluido ? "var(--color-ink-soft)" : "var(--color-ink-faint)" }}
+    >
+      <span
+        className="mt-1.5 h-1 w-1 shrink-0 rounded-full"
+        style={{ background: incluido ? "var(--color-accent)" : "var(--color-ink-faint)" }}
+      />
+      {children}
+    </li>
   );
 }
