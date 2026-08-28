@@ -65,8 +65,8 @@ export function LoginForm() {
         <Link href="/esqueci-senha" className="hover:text-ink">
           Esqueci minha senha
         </Link>
-        <Link href="/cadastro" className="hover:text-ink">
-          Primeiro acesso? Cadastre-se
+        <Link href="/planos" className="hover:text-ink">
+          Ainda não é mentorado? Ver planos
         </Link>
       </div>
     </form>

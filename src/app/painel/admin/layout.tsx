@@ -18,7 +18,7 @@ const ITENS_MENTORIA = [
   { href: "/painel/admin/comunidade", rotulo: "Comunidade" },
   { href: "/painel/admin/mensagens", rotulo: "Mentalidade do dia" },
   { href: "/painel/admin/horarios", rotulo: "Horários de sessão" },
-  { href: "/painel/admin/planos", rotulo: "Planos e pagamentos" },
+  { href: "/painel/admin/receita", rotulo: "Planos e receita" },
   { href: "/painel/admin/assinaturas", rotulo: "Acesso cortesia" },
 ] as const;
 

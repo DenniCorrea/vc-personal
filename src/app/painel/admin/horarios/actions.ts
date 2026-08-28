@@ -65,15 +65,22 @@ export async function gerarHorariosRecorrentes(formData: FormData) {
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados inválidos");
 
   const diasSet = new Set(parsed.data.diasDaSemana);
-  const inicioBase = new Date(`${parsed.data.dataInicio}T00:00`);
+
+  // O calendario e percorrido em UTC puro: aqui so interessa "que dia da
+  // semana e" e "qual a data", nunca um instante. Montar com Date.UTC a
+  // partir dos numeros da string (em vez de deixar o Date interpretar
+  // "2026-09-01T00:00") tira o fuso do processo da conta — o resultado e o
+  // mesmo no dev e na Render. A hora de verdade entra depois, via
+  // dataHoraLocal, que ai sim aplica o fuso do Brasil.
+  const [ano, mes, dia0] = parsed.data.dataInicio.split("-").map(Number);
+  const inicioBase = Date.UTC(ano, mes - 1, dia0);
 
   const novos: { produto: "ALUNO" | "MENTORIA"; tipoAtendimento: "VIDEO" | "PRESENCIAL" | "DISTANCIA" | null; inicio: Date; fim: Date }[] = [];
   for (let dia = 0; dia < parsed.data.semanas * 7; dia++) {
-    const data = new Date(inicioBase);
-    data.setDate(data.getDate() + dia);
-    if (!diasSet.has(data.getDay())) continue;
+    const data = new Date(inicioBase + dia * 86_400_000);
+    if (!diasSet.has(data.getUTCDay())) continue;
 
-    const dataIso = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`;
+    const dataIso = `${data.getUTCFullYear()}-${String(data.getUTCMonth() + 1).padStart(2, "0")}-${String(data.getUTCDate()).padStart(2, "0")}`;
     novos.push({
       produto: parsed.data.produto,
       tipoAtendimento: (parsed.data.tipoAtendimento || null) as "VIDEO" | "PRESENCIAL" | "DISTANCIA" | null,
