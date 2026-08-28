@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
 import { DashboardAluno } from "./DashboardAluno";
-import { DashboardAdminOuPersonal } from "./DashboardAdminOuPersonal";
+import { DashboardMentorado } from "./DashboardMentorado";
 import { AlunoPausado } from "./AlunoPausado";
 import { ALUNO_PAUSADO } from "@/lib/feature-flags";
 
@@ -29,18 +28,7 @@ export default async function PaginaPainel() {
     redirect("/painel/admin");
   }
 
-  const assinatura = await prisma.assinatura.findFirst({
-    where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA", "ATRASADA"] } },
-    include: { plano: true },
-  });
-  const alertasNaoLidos = await prisma.alerta.count({ where: { usuarioId: session.user.id, lido: false } });
-
-  return (
-    <DashboardAdminOuPersonal
-      nome={session.user.name ?? ""}
-      role={session.user.role}
-      alertasNaoLidos={alertasNaoLidos}
-      assinatura={assinatura}
-    />
-  );
+  // So resta PERSONAL_PARCEIRO ("mentorado", handoff_mentoria_b2b_metodo_lider,
+  // tela 5b).
+  return <DashboardMentorado usuarioId={session.user.id} nome={session.user.name ?? ""} />;
 }

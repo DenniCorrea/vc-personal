@@ -1,37 +1,44 @@
 @import "tailwindcss";
 
-/* Paleta "Metodo Lider" (design_handoff_metodo_lider/README.md) — tema escuro
-   fixo, sem variante clara: as fotos e o posicionamento premium do Victor sao
-   pensados pra esse fundo grafite quente. Nomes mantidos como bg/paper/ink por
-   compatibilidade com o resto do app, mas os VALORES agora sao os do handoff. */
+/* Paleta "Dark & Gold" (handoff_mentoria_b2b_metodo_lider/README.md,
+   28/08/2026) — substitui os valores da paleta "Metodo Lider" anterior nos
+   MESMOS tokens (nomes preservados de proposito: sao usados no app inteiro,
+   inclusive no painel do admin que continua no ar). So os VALORES mudam,
+   pra bater exatamente com os tokens do novo handoff. Continua tema escuro
+   fixo, sem variante clara — mesma decisao de antes, so que agora e
+   documento pela mentoria B2B em vez do app de treino. */
 :root {
-  --color-paper: #0e0d0c; /* bg/base */
-  --color-paper-raised: #100f0d; /* bg/surface */
-  --color-panel: #131210; /* bg/panel — sidebar admin, tabelas */
-  --color-card: #161412; /* bg/card mobile */
-  --color-card-admin: #151311; /* bg/card admin */
-  --color-input: #0f0e0c;
-  --color-ink: #f6f3ee; /* text/primary */
-  --color-ink-body: #f4f1ec; /* text/body */
-  --color-ink-soft: rgba(237, 233, 227, 0.55); /* text/muted */
-  --color-ink-subtle: rgba(237, 233, 227, 0.45); /* text/subtle (rotulos) */
-  --color-ink-faint: rgba(237, 233, 227, 0.35); /* text/faint (placeholder) */
-  --color-line: rgba(237, 233, 227, 0.12); /* border/hairline */
-  --color-accent: #c9a87c;
-  --color-accent-hover: #e0c79e;
-  --color-accent-ink: #14120f; /* texto sobre botao accent solido */
-  --color-accent-wash: rgba(201, 168, 124, 0.1);
-  --color-accent-border: rgba(201, 168, 124, 0.4);
-  --color-warn: #c0483b; /* alert — musculo em destaque, risco, erro */
+  --color-hero: #070605; /* bg/hero — fundo do hero de login com parallax */
+  --color-paper: #0a0908; /* bg/base */
+  --color-paper-raised: #0c0b09; /* bg/app — area de conteudo da casca */
+  --color-panel: #100e0b; /* bg/sidebar — sidebar, colunas laterais, tabelas */
+  --color-card: #12100d; /* bg/card */
+  --color-card-admin: #12100d; /* bg/card (painel do mentor usa a mesma casca) */
+  --color-card-alt: #171410; /* bg/card-alt — bolha de mensagem recebida */
+  --color-input: #0c0b09;
+  --color-ink: #f6f2ea; /* text/primary */
+  --color-ink-body: #f3efe7; /* text/body */
+  --color-ink-soft: rgba(232, 227, 218, 0.55); /* text/muted */
+  --color-ink-subtle: rgba(232, 227, 218, 0.45); /* text/subtle (rotulos) */
+  --color-ink-faint: rgba(232, 227, 218, 0.35); /* text/faint (placeholder) */
+  --color-line: rgba(232, 227, 218, 0.12); /* border/hairline */
+  --color-accent: #cba35c; /* gold — acento unico do produto inteiro */
+  --color-accent-hover: #e3c489; /* gold/hover */
+  --color-accent-ink: #14110b; /* texto sobre botao accent solido */
+  --color-accent-wash: rgba(203, 163, 92, 0.09); /* gold/wash */
+  --color-accent-border: rgba(203, 163, 92, 0.4); /* gold/border */
+  --color-warn: #c0483b; /* nao ha cor de erro no escopo do handoff — mantido do tema anterior pra estado de falha */
   --color-warn-wash: rgba(192, 72, 59, 0.07);
 }
 
 @theme inline {
+  --color-hero: var(--color-hero);
   --color-paper: var(--color-paper);
   --color-paper-raised: var(--color-paper-raised);
   --color-panel: var(--color-panel);
   --color-card: var(--color-card);
   --color-card-admin: var(--color-card-admin);
+  --color-card-alt: var(--color-card-alt);
   --color-input: var(--color-input);
   --color-ink: var(--color-ink);
   --color-ink-body: var(--color-ink-body);
@@ -48,6 +55,10 @@
   --color-warn-wash: var(--color-warn-wash);
   --font-sans: var(--font-manrope);
   --font-display: var(--font-instrument-serif);
+  /* Exclusivo pra contadores de tempo ("18h 24min", "15:32 / 24:18") e
+     placeholder de asset — e o que da a sensacao de cronometro real
+     (handoff, secao Tipografia). Nao usar em mais nada. */
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
 }
 
 html {
