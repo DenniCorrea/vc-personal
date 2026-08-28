@@ -3,25 +3,34 @@ import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { sair } from "../actions";
 
-// Os 8 itens do handoff (tela 9), seguidos do que ja existia antes desse
-// pacote e continua funcionando igual — so ganhou a casca nova.
-const ITENS_SIDEBAR = [
+// Sidebar reorganizada em 28/08/2026 pela pivotagem: o foco agora e a
+// Mentoria B2B, entao ela vem primeiro. As telas do app de aluno continuam
+// funcionando (nada foi apagado), mas ficam num grupo separado e rotulado
+// como pausado — senao o Victor abre o painel e a primeira coisa que ve e
+// um produto que ele desligou.
+const ITENS_MENTORIA = [
   { href: "/painel/admin", rotulo: "Visão do dia" },
+  { href: "/painel/admin/trilha", rotulo: "Trilha de conteúdo" },
+  { href: "/painel/admin/videos", rotulo: "Vídeos" },
+  { href: "/painel/admin/conversas", rotulo: "Mensagens" },
+  { href: "/painel/admin/mensagens", rotulo: "Mentalidade do dia" },
+  { href: "/painel/admin/horarios", rotulo: "Horários de sessão" },
+  { href: "/painel/admin/planos", rotulo: "Planos e pagamentos" },
+  { href: "/painel/admin/assinaturas", rotulo: "Acesso cortesia" },
+] as const;
+
+const ITENS_ALUNO_PAUSADO = [
   { href: "/painel/admin/alunos", rotulo: "Alunos" },
   { href: "/painel/admin/treinos", rotulo: "Fichas de treino" },
   { href: "/painel/admin/nutricao", rotulo: "Planos alimentares" },
   { href: "/painel/admin/checkins", rotulo: "Check-ins" },
-  { href: "/painel/admin/conversas", rotulo: "Mensagens" },
-  { href: "/painel/admin/mensagens", rotulo: "Mentalidade do dia" },
-  { href: "/painel/admin/planos", rotulo: "Planos e pagamentos" },
+  { href: "/painel/admin/exercicios", rotulo: "Exercícios" },
 ] as const;
 
-const ITENS_SIDEBAR_OUTROS = [
-  { href: "/painel/admin/assinaturas", rotulo: "Acesso cortesia" },
-  { href: "/painel/admin/videos", rotulo: "Vídeos" },
-  { href: "/painel/admin/exercicios", rotulo: "Exercícios" },
-  { href: "/painel/admin/horarios", rotulo: "Horários" },
-  { href: "/painel/admin/conteudo-mentoria", rotulo: "Conteúdo da mentoria" },
+const ITENS_OUTROS = [
+  // Formato antigo de conteudo (Fase 8), substituido pela Trilha acima.
+  // Fica aqui enquanto tiver conteudo que o Victor ainda nao migrou.
+  { href: "/painel/admin/conteudo-mentoria", rotulo: "Conteúdo (formato antigo)" },
   { href: "/painel/admin/logs", rotulo: "Histórico de ações" },
 ] as const;
 
@@ -76,11 +85,26 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/painel/adm
         </div>
 
         <nav className="mt-4 flex gap-1 overflow-x-auto lg:mt-8 lg:flex-col lg:gap-0.5 lg:overflow-visible">
-          {ITENS_SIDEBAR.map((item) => (
+          {ITENS_MENTORIA.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className="flex shrink-0 items-center justify-between gap-1.5 whitespace-nowrap rounded-[2px] px-3 py-2 text-[12px] text-ink-soft hover:text-ink lg:py-2.5 lg:text-[13px]"
+            >
+              {item.rotulo}
+            </Link>
+          ))}
+        </nav>
+
+        <p className="mt-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-subtle lg:mt-6">
+          Área de aluno · pausada
+        </p>
+        <nav className="mt-1 flex gap-1 overflow-x-auto lg:flex-col lg:gap-0.5 lg:overflow-visible">
+          {ITENS_ALUNO_PAUSADO.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex shrink-0 items-center justify-between gap-1.5 whitespace-nowrap rounded-[2px] px-3 py-2 text-[12px] text-ink-soft hover:text-ink"
             >
               {item.rotulo}
               {item.href === "/painel/admin/alunos" && totalAlunos > 0 && (
@@ -99,7 +123,7 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/painel/adm
           Outros
         </p>
         <nav className="mt-1 flex gap-1 overflow-x-auto lg:flex-col lg:gap-0.5 lg:overflow-visible">
-          {ITENS_SIDEBAR_OUTROS.map((item) => (
+          {ITENS_OUTROS.map((item) => (
             <Link
               key={item.href}
               href={item.href}

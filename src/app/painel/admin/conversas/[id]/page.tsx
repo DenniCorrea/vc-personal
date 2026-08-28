@@ -1,7 +1,14 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { enviarMensagemAdmin } from "../actions";
+
+function minutoDoVideo(segundos: number): string {
+  const m = Math.floor(segundos / 60);
+  const s = segundos % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
 
 export default async function PaginaAdminConversa({ params }: PageProps<"/painel/admin/conversas/[id]">) {
   await exigirPapel("ADMIN");
@@ -10,7 +17,11 @@ export default async function PaginaAdminConversa({ params }: PageProps<"/painel
   const aluno = await prisma.usuario.findFirst({ where: { id, role: { in: ["ALUNO", "PERSONAL_PARCEIRO"] } } });
   if (!aluno) notFound();
 
-  const mensagens = await prisma.mensagem.findMany({ where: { usuarioId: id }, orderBy: { criadoEm: "asc" } });
+  const mensagens = await prisma.mensagem.findMany({
+    where: { usuarioId: id },
+    orderBy: { criadoEm: "asc" },
+    include: { aula: { select: { id: true, titulo: true, modulo: { select: { titulo: true } } } } },
+  });
 
   await prisma.mensagem.updateMany({ where: { usuarioId: id, autorId: id, lida: false }, data: { lida: true } });
 
@@ -24,7 +35,29 @@ export default async function PaginaAdminConversa({ params }: PageProps<"/painel
         {mensagens.map((mensagem) => {
           const doAdmin = mensagem.autorId !== id;
           return (
-            <div key={mensagem.id} className={`flex ${doAdmin ? "justify-end" : "justify-start"}`}>
+            <div key={mensagem.id} className={`flex flex-col ${doAdmin ? "items-end" : "items-start"}`}>
+              {/* Contexto da duvida (handoff 6d): sem isto o Victor le
+                  "no exemplo do recorte..." sem saber de qual aula nem de
+                  que minuto — responder com contexto E o produto aqui. */}
+              {mensagem.aula && (
+                <Link
+                  href={`/painel/admin/trilha/aula/${mensagem.aula.id}`}
+                  className="mb-1 max-w-[420px] rounded-[4px] border border-line px-3 py-2 hover:border-accent-border"
+                  style={{ background: "var(--color-card-admin)" }}
+                >
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">
+                    Dúvida ancorada
+                  </p>
+                  <p className="mt-0.5 text-[12px] leading-snug text-ink">
+                    {mensagem.aula.modulo.titulo} · {mensagem.aula.titulo}
+                  </p>
+                  {mensagem.timestampSegundos !== null && (
+                    <p className="mt-0.5 font-mono text-[11px] text-ink-faint">
+                      minuto {minutoDoVideo(mensagem.timestampSegundos)}
+                    </p>
+                  )}
+                </Link>
+              )}
               <div
                 className="max-w-[420px] px-4 py-2.5 text-[14px] text-ink"
                 style={{

@@ -8,14 +8,9 @@ import { sair } from "../actions";
 // Desktop: sidebar fixa 248px. Mobile: bottom nav de 5 itens, com o resto
 // acessivel pelo Inicio (handoff: "Minhas sessoes, Materiais, Meu plano
 // ficam acessiveis pelo Inicio e pelo avatar/perfil").
-// "Módulos" aponta pra /painel/mentoria (a tela de conteudo por pilar que
-// ja existe e ja tem conteudo publicado pelo Victor), NAO pra uma tela nova
-// vazia: a trilha estruturada (Modulo/Aula) ainda nao tem nem dado nem a
-// tela de gestao no painel do mentor pra alimenta-la. Quando ela existir,
-// e so trocar esse href — o rotulo pro mentorado ja e o definitivo.
 const ITENS_PRINCIPAIS = [
   { href: "/painel", rotulo: "Início", icone: IconeInicio },
-  { href: "/painel/mentoria", rotulo: "Módulos", icone: IconeModulos },
+  { href: "/painel/modulos", rotulo: "Módulos", icone: IconeModulos },
   { href: "/painel/bonus", rotulo: "Bônus", icone: IconeBonus },
   { href: "/painel/comunidade", rotulo: "Comunidade", icone: IconeComunidade },
 ] as const;
@@ -26,6 +21,10 @@ const ITENS_SECUNDARIOS = [
   { href: "/painel/agenda", rotulo: "Minhas sessões" },
   { href: "/painel/materiais", rotulo: "Materiais" },
   { href: "/painel/planos", rotulo: "Meu plano" },
+  // Formato antigo de conteudo (Fase 8). Fica acessivel enquanto o Victor
+  // nao migrar o que publicou la pra trilha nova — senao esse conteudo
+  // sumiria pro mentorado.
+  { href: "/painel/mentoria", rotulo: "Conteúdo anterior" },
   // Sem esse item o mentorado nao alcanca trocar senha, baixar os proprios
   // dados nem pedir exclusao de conta (LGPD art. 18) — o /painel/dados so
   // era linkado das telas do ALUNO, que estao pausadas.
