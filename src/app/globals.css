@@ -18,9 +18,18 @@
   --color-input: #0c0b09;
   --color-ink: #f6f2ea; /* text/primary */
   --color-ink-body: #f3efe7; /* text/body */
-  --color-ink-soft: rgba(232, 227, 218, 0.55); /* text/muted */
-  --color-ink-subtle: rgba(232, 227, 218, 0.45); /* text/subtle (rotulos) */
-  --color-ink-faint: rgba(232, 227, 218, 0.35); /* text/faint (placeholder) */
+  /* Os tres niveis de texto secundario. Os alfas do handoff eram 0.55 /
+     0.45 / 0.35, que dao contraste 5.12 / 3.75 / 2.69 sobre o fundo mais
+     escuro — os dois ultimos abaixo do minimo de 4.5:1 que texto pequeno
+     exige pra ser legivel. Rotulo de tabela e nome de cartao caiam nessa
+     faixa, entao nao era detalhe decorativo: era informacao que a pessoa
+     precisa ler.
+     Escala subida mantendo os tres niveis visualmente distintos
+     (rgb 157/139/123 sobre o fundo base), pra hierarquia do design nao
+     achatar. Medido: 7.00 / 5.59 / 4.54. */
+  --color-ink-soft: rgba(232, 227, 218, 0.66); /* text/muted */
+  --color-ink-subtle: rgba(232, 227, 218, 0.58); /* text/subtle (rotulos) */
+  --color-ink-faint: rgba(232, 227, 218, 0.51); /* text/faint (placeholder) */
   --color-line: rgba(232, 227, 218, 0.12); /* border/hairline */
   --color-accent: #cba35c; /* gold — acento unico do produto inteiro */
   --color-accent-hover: #e3c489; /* gold/hover */
