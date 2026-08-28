@@ -107,7 +107,7 @@ export async function iniciarPagamentoAssinatura(assinaturaId: string, metodo: M
   // Só CARTAO vira cobrança recorrente automática (PreApproval) — o
   // Mercado Pago não tem recorrência confiável pra Pix/débito, então esses
   // dois seguem o fluxo avulso ciclo a ciclo (decisão confirmada com o
-  // Dennis/Victor na Fase 5).
+  // Denni/Victor na Fase 5).
   if (metodo !== "CARTAO") {
     await pagarComPreference({
       usuarioId: session.user.id,

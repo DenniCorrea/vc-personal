@@ -23,7 +23,7 @@ Mentorado" — é o cliente B2B da mentoria), `ADMIN` (o Victor).
   Ver `.agents/skills/prisma-*` no repo, são docs oficiais da Prisma pra
   agentes de IA, mais confiáveis que treinamento defasado.
 - **PostgreSQL na Neon** — é o MESMO banco em dev e produção (decisão do
-  Dennis: "não trabalhamos com normas", sem necessidade de separar ainda).
+  Denni: "não trabalhamos com normas", sem necessidade de separar ainda).
 - **Auth.js (NextAuth v5 beta)** — Credentials + sessão JWT, sem adapter de
   banco (não precisa, não tem login OAuth).
 - **Mercado Pago** — pagamentos (cartão vira assinatura recorrente de
@@ -97,7 +97,7 @@ nesse processo (ver `git log`).
 
 ## Pendente
 
-- Credenciais de teste do Mercado Pago (o Dennis pediu pro Victor)
+- Credenciais de teste do Mercado Pago (o Denni pediu pro Victor)
 - Health Check de infra (endpoint + Render Cron Job) — combinado, ainda
   não feito
 - Guia de estudo / apresentação / material de venda pro Victor / sugestão

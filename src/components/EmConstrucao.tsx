@@ -1,7 +1,7 @@
 // Placeholder honesto pras rotas da Mentoria B2B ja linkadas na navegacao
 // mas cuja tela ainda nao foi construida (handoff_mentoria_b2b_metodo_lider
 // tem 14 telas ao todo — construindo em ordem de prioridade combinada com
-// o Dennis: casca + login + dashboard primeiro). Existe pra ninguem cair
+// o Denni: casca + login + dashboard primeiro). Existe pra ninguem cair
 // num 404 ao clicar num item do menu que ja esta no ar.
 export function EmConstrucao({ titulo, descricao }: { titulo: string; descricao: string }) {
   return (

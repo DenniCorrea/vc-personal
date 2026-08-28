@@ -3,24 +3,25 @@
 import { useEffect, useRef, useState } from "react";
 import Player from "@vimeo/player";
 import { salvarPosicao, marcarConcluida } from "../actions";
+import { conectarPlayer, desconectarPlayer } from "./tempoDoPlayer";
 
-// Player da aula com retomada de posicao e conclusao automatica.
+// Player da aula com retomada de posicao, conclusao automatica e captura do
+// minuto pro formulario de duvida.
 //
-// Por que o SDK do Vimeo e nao so um <iframe>: o iframe simples nao deixa
-// nem LER o tempo corrente nem MANDAR o video pular pra um ponto. Sem isso,
-// "continue de onde parou" (handoff, secao Interacoes) nao existe — era o
-// que faltava pra isso deixar de ser uma area de video e virar uma area de
-// membros de verdade.
+// DECISAO IMPORTANTE: o <iframe> e renderizado pelo REACT e o SDK apenas se
+// acopla nele (`new Player(iframeElement)`), em vez de deixar o SDK criar o
+// proprio iframe dentro de uma <div> (`new Player(div, { id })`).
 //
-// Tres comportamentos:
-// 1. Ao carregar, pula pra ultima posicao salva (se houver e se nao estiver
-//    quase no fim — retomar em 99% so faria a pessoa ver os creditos).
-// 2. Salva a posicao a cada 15s de reproducao, e tambem ao pausar/sair.
-//    15s equilibra: perder no maximo 15s de progresso vs. nao martelar o
-//    servidor a cada segundo.
-// 3. Marca como concluida sozinho ao passar de 95% (regra do handoff) —
-//    ninguem assiste os creditos, e obrigar o clique manual faz o progresso
-//    do mentorado parecer pior do que e.
+// Motivo: com o SDK criando o iframe, ele mexe no DOM por baixo do React.
+// Na remontagem do efeito (que o React faz de proposito em desenvolvimento),
+// o `destroy()` assincrono do primeiro player e a criacao do segundo se
+// atropelam — sobra um iframe na tela tocando normalmente, mas ligado a uma
+// instancia ja destruida. Resultado: o video roda e NENHUM evento chega.
+// Foi exatamente isso que aconteceu: a posicao nunca era salva, e o defeito
+// nao aparecia na tela (o video tocava lindamente).
+//
+// Com o iframe sob controle do React, o elemento e estavel entre montagens e
+// o acoplamento do SDK e so uma assinatura de eventos — sem disputa de DOM.
 const INTERVALO_SALVAR_MS = 15_000;
 const PERCENTUAL_CONCLUSAO = 0.95;
 
@@ -39,44 +40,52 @@ export function PlayerAula({
   posicaoInicial: number;
   jaConcluida: boolean;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const ultimoSalvoRef = useRef(posicaoInicial);
   const concluiuRef = useRef(jaConcluida);
   const [retomou, setRetomou] = useState(false);
 
+  // dnt=1 + title/byline/portrait/badge=0 tira toda marca do Vimeo (handoff).
+  const params = new URLSearchParams({ dnt: "1", title: "0", byline: "0", portrait: "0", badge: "0" });
+  if (vimeoHash) params.set("h", vimeoHash);
+  const src = `https://player.vimeo.com/video/${vimeoId}?${params.toString()}`;
+
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
 
-    const player = new Player(container, {
-      id: Number(vimeoId),
-      ...(vimeoHash ? { h: vimeoHash } : {}),
-      // Mesma limpeza de marca do wrapper simples (handoff).
-      dnt: true,
-      title: false,
-      byline: false,
-      portrait: false,
-      responsive: true,
-    });
-
+    const player = new Player(iframe);
     let vivo = true;
 
-    // 1. Retomada
+    // Liga o player ao formulario de duvida: ele pergunta o tempo no
+    // clique e pausa o video ao abrir — ninguem formula uma pergunta com a
+    // aula correndo no ouvido.
+    conectarPlayer({
+      aulaId,
+      lerTempo: () => player.getCurrentTime(),
+      pausar: () => {
+        void player.pause().catch(() => {});
+      },
+    });
+
+    // 1. Retomada — pula pra ultima posicao salva, a nao ser que ela ja
+    // esteja quase no fim (retomar em 99% so mostraria os creditos).
     player
       .getDuration()
       .then((duracao) => {
         if (!vivo) return;
         const quaseNoFim = posicaoInicial >= duracao * PERCENTUAL_CONCLUSAO;
         if (posicaoInicial > 5 && !quaseNoFim) {
-          return player.setCurrentTime(posicaoInicial).then(() => setRetomou(true));
+          return player.setCurrentTime(posicaoInicial).then(() => {
+            if (vivo) setRetomou(true);
+          });
         }
       })
       .catch(() => {
-        // Video privado/removido, rede caida: nao quebra a tela — a pessoa
-        // simplesmente comeca do zero.
+        // Video privado, removido ou rede caida: a pessoa so comeca do zero.
       });
 
-    // 2 e 3. Progresso
+    // 2. Progresso e 3. conclusao automatica
     let ultimoEnvio = Date.now();
     const aoTocar = ({ seconds, duration }: { seconds: number; duration: number }) => {
       if (!vivo) return;
@@ -104,9 +113,8 @@ export function PlayerAula({
     player.on("pause", aoParar);
     player.on("ended", aoParar);
 
-    // Fechar a aba conta como sair: salva o ultimo tempo conhecido. Nao da
-    // pra esperar resposta aqui (a aba esta indo embora), entao usamos o que
-    // ja esta em memoria.
+    // Fechar a aba conta como sair. Nao da pra esperar resposta aqui, entao
+    // manda o ultimo tempo que ja esta em memoria.
     const aoSair = () => {
       void salvarPosicao(aulaId, ultimoSalvoRef.current).catch(() => {});
     };
@@ -114,19 +122,30 @@ export function PlayerAula({
 
     return () => {
       vivo = false;
+      desconectarPlayer(aulaId);
       window.removeEventListener("pagehide", aoSair);
-      void player.destroy().catch(() => {});
+      // `off` e nao `destroy()`: o iframe pertence ao React. Destruir aqui
+      // arrancaria da arvore um elemento que o React ainda gerencia — que e
+      // justamente a disputa que causou o defeito original.
+      player.off("timeupdate", aoTocar);
+      player.off("pause", aoParar);
+      player.off("ended", aoParar);
     };
-  }, [aulaId, vimeoId, vimeoHash, posicaoInicial]);
+  }, [aulaId, posicaoInicial]);
 
   return (
     <div>
-      <div ref={containerRef} className="aspect-video w-full overflow-hidden rounded-[4px] bg-black" title={titulo} />
-      {retomou && (
-        <p className="mt-2 text-[12px] text-ink-faint">
-          Retomamos de onde você parou.
-        </p>
-      )}
+      <div className="aspect-video w-full overflow-hidden rounded-[4px] bg-black">
+        <iframe
+          ref={iframeRef}
+          src={src}
+          title={titulo}
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+          className="h-full w-full"
+        />
+      </div>
+      {retomou && <p className="mt-2 text-[12px] text-ink-faint">Retomamos de onde você parou.</p>}
     </div>
   );
 }
