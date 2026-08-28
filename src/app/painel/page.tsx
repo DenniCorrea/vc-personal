@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { DashboardAluno } from "./DashboardAluno";
 import { DashboardAdminOuPersonal } from "./DashboardAdminOuPersonal";
+import { AlunoPausado } from "./AlunoPausado";
+import { ALUNO_PAUSADO } from "@/lib/feature-flags";
 
 export default async function PaginaPainel() {
   // O proxy.ts (src/proxy.ts) ja bloqueia quem nao esta logado antes de
@@ -15,6 +17,9 @@ export default async function PaginaPainel() {
   }
 
   if (session.user.role === "ALUNO") {
+    if (ALUNO_PAUSADO) {
+      return <AlunoPausado nome={session.user.name ?? ""} />;
+    }
     return <DashboardAluno usuarioId={session.user.id} nome={session.user.name ?? ""} />;
   }
 

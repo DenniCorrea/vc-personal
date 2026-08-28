@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { ALUNO_PAUSADO } from "@/lib/feature-flags";
 import type { Role } from "@/generated/prisma/enums";
 
 // Centraliza a checagem "esta logado E tem o papel certo" pra nao repetir
@@ -34,5 +35,14 @@ export async function exigirSessao() {
 export async function exigirPapel(...papeis: Role[]) {
   const session = await exigirSessao();
   if (!papeis.includes(session.user.role)) redirect("/painel");
+
+  // Pausa da area de aluno (28/08/2026, ver src/lib/feature-flags.ts):
+  // barrar so aqui deixaria /painel/treinos, /painel/nutricao etc. abertos
+  // pra quem digitasse a URL direto, mesmo com o dashboard pausado. Como
+  // TODA pagina/action do aluno passa por exigirPapel, um unico ponto aqui
+  // fecha a area inteira — inclusive as rotas compartilhadas com
+  // PERSONAL_PARCEIRO (agenda, mensagens, planos), que continua ativo.
+  if (session.user.role === "ALUNO" && ALUNO_PAUSADO) redirect("/painel");
+
   return session;
 }

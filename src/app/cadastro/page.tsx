@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { cadastrar, type EstadoCadastro } from "./actions";
+import { ALUNO_PAUSADO } from "@/lib/feature-flags";
 
 const estadoInicial: EstadoCadastro = {};
 
@@ -53,17 +54,25 @@ export default function PaginaCadastro() {
           minLength={8}
         />
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium text-ink">Eu sou</legend>
-          <label className="flex items-center gap-2 text-sm text-ink-soft">
-            <input type="radio" name="role" value="ALUNO" defaultChecked required />
-            Aluno — quero treinar com o Victor
-          </label>
-          <label className="flex items-center gap-2 text-sm text-ink-soft">
-            <input type="radio" name="role" value="PERSONAL_PARCEIRO" />
-            Personal trainer — quero a mentoria
-          </label>
-        </fieldset>
+        {ALUNO_PAUSADO ? (
+          // Area de aluno pausada (28/08/2026) — so resta uma opcao, entao
+          // vira campo fixo em vez de escolha. O `role` continua enum no
+          // servidor (cadastro/actions.ts recusaria "ALUNO" mesmo se
+          // alguem forjasse o POST).
+          <input type="hidden" name="role" value="PERSONAL_PARCEIRO" />
+        ) : (
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-sm font-medium text-ink">Eu sou</legend>
+            <label className="flex items-center gap-2 text-sm text-ink-soft">
+              <input type="radio" name="role" value="ALUNO" defaultChecked required />
+              Aluno — quero treinar com o Victor
+            </label>
+            <label className="flex items-center gap-2 text-sm text-ink-soft">
+              <input type="radio" name="role" value="PERSONAL_PARCEIRO" />
+              Personal trainer — quero a mentoria
+            </label>
+          </fieldset>
+        )}
 
         <label className="flex items-start gap-2 text-sm text-ink-soft">
           <input type="checkbox" name="aceiteLgpd" required className="mt-1" />

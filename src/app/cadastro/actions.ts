@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashSenha } from "@/lib/senha";
 import { estaBloqueado, registrarFalha } from "@/lib/rate-limit";
+import { ALUNO_PAUSADO } from "@/lib/feature-flags";
 
 // `role` aceita so ALUNO ou PERSONAL_PARCEIRO aqui de proposito — ADMIN
 // nunca e uma opcao no formulario publico. Mesmo que alguem manipule o
@@ -39,6 +40,14 @@ export async function cadastrar(
     return { erro: parsed.error.issues[0]?.message ?? "Dados invalidos" };
   }
   const { nome, email, senha, role } = parsed.data;
+
+  // Pausa da area de aluno (28/08/2026, ver src/lib/feature-flags.ts): o
+  // radio "Aluno" some da tela (ver page.tsx), mas o valor real chega por
+  // POST direto — sem isso alguem que ja tivesse a pagina aberta antes da
+  // mudanca, ou que forjasse o POST, ainda criaria conta de aluno.
+  if (role === "ALUNO" && ALUNO_PAUSADO) {
+    return { erro: "Novos cadastros de aluno estão temporariamente pausados." };
+  }
 
   // Trava contra criacao de contas em massa por script. Conta por e-mail:
   // uma pessoa real tentando de novo depois de errar algo nao chega perto
