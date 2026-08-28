@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { dataHoraLocal } from "@/lib/data";
 
 const conteudoSchema = z.object({
   pilar: z.enum(["POSICIONAMENTO", "ABORDAGEM", "MAPEAMENTO", "VENDAS", "FIDELIZACAO"]),
@@ -28,7 +29,7 @@ export async function salvarConteudo(id: string, formData: FormData) {
     videoId: parsed.data.videoId || null,
     // O input type="date" manda "AAAA-MM-DD" — vira meia-noite local, hora
     // suficiente pra decidir "esse conteudo ja deveria estar visivel hoje?".
-    publicadoEm: new Date(`${parsed.data.publicadoEm}T00:00`),
+    publicadoEm: dataHoraLocal(parsed.data.publicadoEm, "00:00"),
   };
 
   if (id === "novo") {

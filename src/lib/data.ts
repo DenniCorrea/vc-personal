@@ -1,23 +1,50 @@
-// So a data (sem hora) de "hoje", no fuso local do servidor (Brasil).
-// Construida com Date.UTC a partir dos componentes locais pra bater
-// certinho com um campo @db.Date do Postgres (que nao guarda fuso horario) —
-// sem isso, perto da meia-noite o registro podia cair no dia errado.
-export function hojeData(): Date {
-  const agora = new Date();
-  return new Date(Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate()));
+// O app inteiro opera num fuso so: o do Victor e dos mentorados dele.
+//
+// Isso PRECISA ser explicito, nao herdado do processo Node: em
+// desenvolvimento a maquina esta em America/Sao_Paulo, mas em producao a
+// Render roda em UTC. Sem declarar o fuso, a mesma data/hora aparecia
+// diferente nos dois ambientes — um horario marcado pras 14h chegava a
+// mostrar 17h, e um cadastro feito as 22h aparecia com a data do dia
+// seguinte.
+//
+// O Brasil nao tem mais horario de verao (abolido em 2019), entao o offset
+// e fixo em -03:00. Se isso voltar um dia, este e o unico lugar a mudar.
+export const FUSO = "America/Sao_Paulo";
+export const OFFSET_FUSO = "-03:00";
+
+// Fabrica de formatadores ja amarrados ao fuso do app. Usar SEMPRE isto em
+// vez de `new Intl.DateTimeFormat("pt-BR", {...})` direto, senao volta a
+// depender do fuso do servidor.
+export function formatador(opcoes: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat("pt-BR", { ...opcoes, timeZone: FUSO });
 }
 
-// "AAAA-MM-DD" pra preencher um <input type="date">, usando os componentes
-// LOCAIS da data (nao toISOString, que e UTC) — combina com como as actions
-// de admin fazem `new Date(\`${valor}T00:00\`)` (interpretado como horario
-// local). Misturar os dois fazia um conteudo "publicado hoje" aparecer como
-// "agendado pro futuro" perto da virada do dia em UTC (mesma pegadinha da
-// Fase 4).
+// Converte "2026-08-30" + "14:00" no instante correto — as 14h NO BRASIL,
+// nao as 14h do fuso onde o servidor por acaso esta rodando.
+export function dataHoraLocal(data: string, hora: string): Date {
+  return new Date(`${data}T${hora}:00${OFFSET_FUSO}`);
+}
+
+// So a data (sem hora) de "hoje" no fuso do app, normalizada pra
+// meia-noite UTC — que e como o Postgres guarda um campo @db.Date (sem
+// hora nem fuso). Ler o "hoje" do relogio do servidor daria o dia errado
+// nas primeiras 3 horas de cada dia em UTC (21h-00h no Brasil).
+export function hojeData(): Date {
+  const partes = formatador({ year: "numeric", month: "2-digit", day: "2-digit" })
+    .formatToParts(new Date())
+    .reduce<Record<string, string>>((acc, p) => ({ ...acc, [p.type]: p.value }), {});
+  return new Date(Date.UTC(Number(partes.year), Number(partes.month) - 1, Number(partes.day)));
+}
+
+// "AAAA-MM-DD" pra preencher um <input type="date">, no fuso do app.
+// Antes usava os componentes LOCAIS do processo — o que dava a data certa
+// no dev (maquina no Brasil) e a errada em producao (Render em UTC) pra
+// qualquer registro criado depois das 21h.
 export function paraInputDate(data: Date): string {
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, "0");
-  const dia = String(data.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
+  const p = formatador({ year: "numeric", month: "2-digit", day: "2-digit" })
+    .formatToParts(data)
+    .reduce<Record<string, string>>((acc, x) => ({ ...acc, [x.type]: x.value }), {});
+  return `${p.year}-${p.month}-${p.day}`;
 }
 
 // "DD/MM" ou "DD/MM/AAAA" pra EXIBIR um campo @db.Date (Avaliacao.data,

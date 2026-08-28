@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { hojeData } from "@/lib/data";
+import { hojeData, formatador } from "@/lib/data";
 import { CheckinForm } from "./CheckinForm";
+
+const formatoHoje = formatador({ day: "2-digit", month: "long" });
 
 export default async function PaginaNutricao() {
   const session = await exigirPapel("ALUNO");
@@ -35,7 +37,7 @@ export default async function PaginaNutricao() {
   return (
     <main className="px-6 pt-cabecalho-aluno pb-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-        {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}
+        {formatoHoje.format(new Date())}
       </p>
       <h1 className="font-display mt-1 text-[28px] text-ink">Plano alimentar</h1>
 

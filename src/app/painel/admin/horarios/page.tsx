@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { criarHorario, desativarHorario, marcarStatusAgendamento, gerarHorariosRecorrentes } from "./actions";
+import { formatador } from "@/lib/data";
 
 const DIAS_SEMANA = [
   { valor: 1, rotulo: "Seg" },
@@ -13,7 +14,7 @@ const DIAS_SEMANA = [
   { valor: 0, rotulo: "Dom" },
 ] as const;
 
-const formatoDataHora = new Intl.DateTimeFormat("pt-BR", {
+const formatoDataHora = formatador({
   weekday: "short",
   day: "2-digit",
   month: "2-digit",

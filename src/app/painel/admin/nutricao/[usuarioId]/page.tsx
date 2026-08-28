@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { adicionarRefeicao, removerRefeicao, definirMetasNutricionais } from "../actions";
+import { formatador } from "@/lib/data";
+
+const formatoDataCheckin = formatador({ day: "2-digit", month: "2-digit", year: "numeric" });
 
 const seteDiasAtras = () => {
   const d = new Date();
@@ -160,7 +163,7 @@ export default async function PaginaAdminNutricaoAluno({
                   <div key={c.id}>
                     <p className="text-[13px] text-ink">&ldquo;{c.observacaoAdaptacao}&rdquo;</p>
                     <p className="mt-1 text-[11px] text-ink-faint">
-                      {c.refeicao.nome} · {c.criadoEm.toLocaleDateString("pt-BR")}
+                      {c.refeicao.nome} · {formatoDataCheckin.format(c.criadoEm)}
                     </p>
                   </div>
                 ))}

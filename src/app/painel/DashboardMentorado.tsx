@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { inicioDoCicloAtual } from "@/lib/mentoria";
+import { formatador } from "@/lib/data";
 
 const formatoMoeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const formatoData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
+const formatoData = formatador({ day: "2-digit", month: "short" });
 
 // Dashboard do mentorado (handoff_mentoria_b2b_metodo_lider, tela 5b).
 // Trilha ("continue de onde parou", "seu progresso") mostra estado vazio

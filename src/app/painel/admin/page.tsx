@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { hojeData } from "@/lib/data";
+import { hojeData, formatador } from "@/lib/data";
+
+const formatoHoje = formatador({ weekday: "long", day: "2-digit", month: "long" });
 
 const SEIS_SEMANAS_MS = 6 * 7 * 24 * 60 * 60 * 1000;
 
@@ -106,7 +108,7 @@ export default async function PaginaAdminVisaoDoDia() {
   return (
     <main>
       <p className="text-[12px] text-ink-soft">
-        {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
+        {formatoHoje.format(new Date())}
       </p>
       <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-[26px] text-ink lg:text-[34px]">Quem precisa da sua atenção hoje</h1>

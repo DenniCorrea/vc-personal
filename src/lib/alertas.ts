@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { hojeData } from "@/lib/data";
+import { hojeData, formatador } from "@/lib/data";
 
-const formatoData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" });
+const formatoHora = formatador({ hour: "2-digit", minute: "2-digit" });
+
+const formatoData = formatador({ day: "2-digit", month: "2-digit" });
 
 // Cria o Alerta se a `chaveDedup` ainda nao existir. Ignora silenciosamente
 // se ja existe (e assim que evitamos gerar o mesmo aviso toda vez que esse
@@ -137,7 +139,7 @@ export async function gerarAlertas(): Promise<{ criados: number }> {
     await criarSeNaoExiste({
       usuarioId: agendamento.usuarioId,
       tipo: "AGENDA",
-      mensagem: `Sua sessão começa às ${agendamento.horario.inicio.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}.`,
+      mensagem: `Sua sessão começa às ${formatoHora.format(agendamento.horario.inicio)}.`,
       chaveDedup: `agenda:${agendamento.id}`,
     });
     criados++;

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { formatador } from "@/lib/data";
+
+const formatoData = formatador({ day: "2-digit", month: "2-digit", year: "numeric" });
 
 export default async function PaginaAdminCheckins() {
   await exigirPapel("ADMIN");
@@ -27,7 +30,7 @@ export default async function PaginaAdminCheckins() {
               <p className="text-[14px] font-medium text-ink">
                 {checkin.refeicao.planoNutricional.usuario.nome}
               </p>
-              <p className="text-[12px] text-ink-faint">{checkin.criadoEm.toLocaleDateString("pt-BR")}</p>
+              <p className="text-[12px] text-ink-faint">{formatoData.format(checkin.criadoEm)}</p>
             </div>
             <p className="mt-1 text-[12px] text-ink-soft">{checkin.refeicao.nome}</p>
             <p className="mt-2 text-[13px] text-ink">&ldquo;{checkin.observacaoAdaptacao}&rdquo;</p>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { dataHoraLocal } from "@/lib/data";
 
 const horarioSchema = z.object({
   produto: z.enum(["ALUNO", "MENTORIA"]),
@@ -22,8 +23,8 @@ export async function criarHorario(formData: FormData) {
   // atende). Sem isso viraria uma tela de configuracao de timezone que
   // ninguem pediu — se o app crescer pra atender gente em outro fuso, essa
   // e a hora de revisitar.
-  const inicio = new Date(`${parsed.data.data}T${parsed.data.horaInicio}`);
-  const fim = new Date(`${parsed.data.data}T${parsed.data.horaFim}`);
+  const inicio = dataHoraLocal(parsed.data.data, parsed.data.horaInicio);
+  const fim = dataHoraLocal(parsed.data.data, parsed.data.horaFim);
   if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime()) || fim <= inicio) {
     throw new Error("Horário inválido — o fim precisa ser depois do início.");
   }
@@ -76,8 +77,8 @@ export async function gerarHorariosRecorrentes(formData: FormData) {
     novos.push({
       produto: parsed.data.produto,
       tipoAtendimento: (parsed.data.tipoAtendimento || null) as "VIDEO" | "PRESENCIAL" | "DISTANCIA" | null,
-      inicio: new Date(`${dataIso}T${parsed.data.horaInicio}`),
-      fim: new Date(`${dataIso}T${parsed.data.horaFim}`),
+      inicio: dataHoraLocal(dataIso, parsed.data.horaInicio),
+      fim: dataHoraLocal(dataIso, parsed.data.horaFim),
     });
   }
 

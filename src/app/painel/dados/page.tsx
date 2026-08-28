@@ -5,8 +5,9 @@ import { solicitarExclusaoConta } from "./actions";
 import { sair } from "../actions";
 import { TrocarSenhaForm } from "./TrocarSenhaForm";
 import { TrocarFotoForm } from "./TrocarFotoForm";
+import { formatador } from "@/lib/data";
 
-const formatoData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+const formatoData = formatador({ day: "2-digit", month: "long", year: "numeric" });
 const formatoMoeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 const ROTULO_METODO: Record<string, string> = { CARTAO: "Cartão", DEBITO: "Débito", PIX: "Pix" };

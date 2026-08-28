@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { registrarLogAdmin } from "@/lib/log-admin";
+import { dataHoraLocal } from "@/lib/data";
 
 const cortesiaSchema = z.object({
   usuarioId: z.string().min(1),
@@ -37,7 +38,7 @@ export async function concederCortesia(formData: FormData) {
       status: "ATIVA",
       cortesia: true,
       concedidaPorId: session.user.id,
-      dataProximaRenovacao: new Date(`${parsed.data.dataProximaRenovacao}T00:00`),
+      dataProximaRenovacao: dataHoraLocal(parsed.data.dataProximaRenovacao, "00:00"),
     },
   });
   await registrarLogAdmin(session.user.id, "concedeu cortesia", "Assinatura", assinatura.id);

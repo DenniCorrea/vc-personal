@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { alternarAtivoConteudo } from "./actions";
+import { formatador } from "@/lib/data";
 
 const ROTULO_PILAR: Record<string, string> = {
   POSICIONAMENTO: "Posicionamento",
@@ -11,7 +12,7 @@ const ROTULO_PILAR: Record<string, string> = {
   FIDELIZACAO: "Fidelização",
 };
 
-const formatoData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+const formatoData = formatador({ day: "2-digit", month: "2-digit", year: "numeric" });
 
 export default async function PaginaAdminConteudoMentoria() {
   await exigirPapel("ADMIN");

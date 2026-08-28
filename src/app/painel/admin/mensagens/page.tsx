@@ -2,8 +2,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { alternarAtivoMensagem } from "./actions";
+import { formatador } from "@/lib/data";
 
-const formatoData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" });
+const formatoData = formatador({ day: "2-digit", month: "2-digit" });
 
 export default async function PaginaAdminMensagens() {
   await exigirPapel("ADMIN");

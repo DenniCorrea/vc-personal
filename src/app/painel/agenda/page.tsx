@@ -4,8 +4,11 @@ import { exigirPapel } from "@/lib/auth-guard";
 import { inicioDaSemana, fimDaSemana } from "@/lib/agenda";
 import { reservarHorario, cancelarAgendamento } from "./actions";
 import { iniciarPagamentoAgendamento } from "../pagamento/actions";
+import { formatador } from "@/lib/data";
 
-const formatoHora = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const formatoDiaMes = formatador({ day: "2-digit", month: "2-digit" });
+
+const formatoHora = formatador({ hour: "2-digit", minute: "2-digit" });
 const DIAS_SEMANA_CURTO = ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"];
 const MESES = [
   "janeiro", "fevereiro", "março", "abril", "maio", "junho",
@@ -256,7 +259,7 @@ export default async function PaginaAgenda() {
               className="flex items-center justify-between rounded-[4px] border border-line bg-card p-4"
             >
               <p className="text-[14px] text-ink">
-                {horario.inicio.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} ·{" "}
+                {formatoDiaMes.format(horario.inicio)} ·{" "}
                 {formatoHora.format(horario.inicio)}
                 {horario.tipoAtendimento && ` · ${ROTULO_TIPO[horario.tipoAtendimento]}`}
               </p>

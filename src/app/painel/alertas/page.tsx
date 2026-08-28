@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { exigirSessao, bloquearAlunoPausado } from "@/lib/auth-guard";
 import { marcarComoLido, marcarTodosComoLidos, verificarAlertasAgora } from "./actions";
 import type { TipoAlerta } from "@/generated/prisma/enums";
+import { formatador } from "@/lib/data";
 
-const formatoDataHora = new Intl.DateTimeFormat("pt-BR", {
+const formatoDataHora = formatador({
   day: "2-digit",
   month: "2-digit",
   hour: "2-digit",

@@ -222,3 +222,27 @@ destrutivos.
 4. `git status` revisado — nada de `.env` ou segredo no diff.
 5. Push → deploy automático na Render → conferir no ar antes de dar por
    encerrado.
+
+## Fuso horário — regra única
+
+O app opera num fuso só (Brasil). Isso é **declarado**, nunca herdado do
+processo: em desenvolvimento a máquina está em `America/Sao_Paulo`, mas em
+produção a Render roda em **UTC**. Sem declarar, a mesma data/hora aparece
+diferente nos dois ambientes.
+
+- **Exibir** data ou hora: usar `formatador({...})` de `src/lib/data.ts`,
+  nunca `new Intl.DateTimeFormat("pt-BR", {...})` nem
+  `toLocaleDateString()` direto — os dois usam o fuso do servidor.
+- **Gravar** data+hora vinda de formulário: usar `dataHoraLocal(data, hora)`,
+  nunca `new Date(\`${data}T${hora}\`)` — string sem offset é interpretada
+  no fuso do processo. Um horário digitado como 14:00 virava 11:00 real em
+  produção, e a tela ainda mostrava "14:00", o que escondia o erro.
+- Campo `@db.Date` (sem hora) continua com `formatarDataCurta` /
+  `hojeData`, que usam getters UTC — regra diferente e já documentada
+  acima; não misturar as duas.
+
+**Ao verificar datas no banco por script:** as colunas são
+`timestamp without time zone`. O driver devolve string ingênua
+(`"2026-09-20 17:00:00"`), e `new Date(...)` nessa string a interpreta como
+horário LOCAL, somando o offset e dando um valor errado na conferência.
+Comparar com `inicio::text` no SQL, não com `new Date()` no JS.

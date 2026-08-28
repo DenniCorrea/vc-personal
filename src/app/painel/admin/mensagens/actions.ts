@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { dataHoraLocal } from "@/lib/data";
 
 const mensagemSchema = z.object({
   texto: z.string().trim().min(2),
@@ -20,7 +21,7 @@ export async function salvarMensagem(id: string, formData: FormData) {
   const dados = {
     texto: parsed.data.texto,
     frequencia: parsed.data.frequencia,
-    publicadoEm: new Date(`${parsed.data.publicadoEm}T00:00`),
+    publicadoEm: dataHoraLocal(parsed.data.publicadoEm, "00:00"),
   };
 
   if (id === "novo") {

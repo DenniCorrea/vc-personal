@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { formatador } from "@/lib/data";
 
-const formatoDataHora = new Intl.DateTimeFormat("pt-BR", {
+const formatoDataHora = formatador({
   day: "2-digit",
   month: "2-digit",
   hour: "2-digit",
