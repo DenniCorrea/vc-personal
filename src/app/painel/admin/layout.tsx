@@ -10,6 +10,7 @@ import { sair } from "../actions";
 // um produto que ele desligou.
 const ITENS_MENTORIA = [
   { href: "/painel/admin", rotulo: "Visão do dia" },
+  { href: "/painel/admin/mentorados", rotulo: "Mentorados" },
   { href: "/painel/admin/trilha", rotulo: "Trilha de conteúdo" },
   { href: "/painel/admin/bonus", rotulo: "Bônus" },
   { href: "/painel/admin/duvidas", rotulo: "Dúvidas" },
