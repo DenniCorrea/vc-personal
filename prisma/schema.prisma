@@ -208,6 +208,12 @@ model Usuario {
   // escrevendo na propria, ou o admin respondendo a de um aluno).
   mensagensEnviadas Mensagem[]          @relation("AutorMensagem")
 
+  // --- Mentoria B2B (28/08/2026) ---
+  progressoAulas Progresso[]
+  posts          Post[]
+  comentarios    Comentario[]
+  curtidas       Curtida[]
+
   @@map("usuarios")
 }
 
@@ -245,6 +251,11 @@ model Plano {
   incluiNutricao     Boolean           @default(false)
   tiposAtendimento   TipoAtendimento[]
 
+  // Especifico de Produto.MENTORIA: se esse plano da acesso a TODOS os
+  // bonus (nao existe bonus por assinatura avulsa — e tudo ou nada, igual
+  // ao catalogo do handoff: "Fundamento: —, Autoridade/Escala: todos").
+  incluiBonus Boolean @default(false)
+
   // Lista livre pro admin descrever diferenciais sem precisar de migration
   // pra cada beneficio novo (ex: "acesso a grupo exclusivo", "avaliacao
   // fisica mensal"). Texto puro de proposito — nao e regra que o sistema
@@ -255,7 +266,12 @@ model Plano {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
-  assinaturas Assinatura[]
+  assinaturas   Assinatura[]
+  // So especifico de Produto.MENTORIA: quais aulas esse plano libera. Uma
+  // Aula sem nenhum plano marcado em "Quem ve" fica invisivel pra todo
+  // mundo — e assim que o rascunho nao vaza antes do admin configurar a
+  // visibilidade.
+  aulasVisiveis Aula[]
 
   // Dois planos do MESMO produto nao podem ter nome igual (evita catalogo
   // confuso), mas um plano de ALUNO e um de MENTORIA podem, em tese,
@@ -425,6 +441,8 @@ model Video {
 
   exerciciosVinculados Exercicio[]
   conteudosVinculados  ConteudoConsultoria[]
+  aulasVinculadas      Aula[]
+  bonusVinculados      Bonus[]
 
   @@map("videos")
 }
@@ -839,6 +857,19 @@ model Mensagem {
   texto String
   lida  Boolean @default(false)
 
+  // --- Ancora na aula (Mentoria B2B, handoff 5f) ---
+  // Preenchidos so quando a mensagem nasceu do botao "Enviar duvida desta
+  // aula" no player — e o que permite o card clicavel "Modulo 2 · Aula 4 ·
+  // 15:32" acima da bolha, e o "Abrir no ponto" que retoma o video ali.
+  aula              Aula?   @relation(fields: [aulaId], references: [id])
+  aulaId            String?
+  timestampSegundos Int?
+
+  // Marca "TAREFA PARA A PROXIMA SESSAO" (handoff 6d, atalho "Levar para a
+  // sessao"). Continua sendo uma Mensagem normal na thread — so ganha esse
+  // destaque visual, sem precisar de tabela separada.
+  tarefa Boolean @default(false)
+
   criadoEm DateTime @default(now())
 
   @@map("mensagens")
@@ -860,4 +891,202 @@ model TentativaAutenticacao {
 
   @@index([chave, criadoEm])
   @@map("tentativas_autenticacao")
+}
+
+// ---------------------------------------------------------------------------
+// Mentoria B2B (28/08/2026) — trilha de conteudo, bonus e comunidade.
+// Handoff em handoff_mentoria_b2b_metodo_lider/. Reaproveita o que ja
+// existia pra ALUNO/MENTORIA sem duplicar: Plano/Assinatura (nivel e
+// limite de sessoes), Agendamento/Horario (sessoes 1-on-1), Video
+// (hospedagem no Vimeo), Mensagem (canal direto, agora com ancora de
+// aula). So o que faltava — trilha organizada, bonus com prazo, comunidade
+// — ganha modelo novo.
+// ---------------------------------------------------------------------------
+
+enum StatusPublicacao {
+  RASCUNHO
+  AGENDADA
+  PUBLICADA
+}
+
+enum TipoPost {
+  RESULTADO
+  DUVIDA
+  GERAL
+}
+
+// Um pilar da trilha (reaproveita o enum Pilar ja usado no ConteudoConsultoria
+// da Fase 8). "N de M aulas" e "Continue de onde parou" (handoff 5b/5c) sao
+// calculados a partir daqui, nao guardados.
+model Modulo {
+  id    String @id @default(uuid())
+  pilar Pilar
+
+  titulo    String
+  descricao String?
+
+  // Ordem de exibicao pro mentorado — "a ordem aqui e a ordem que o
+  // mentorado ve" (handoff 6b). Arrastavel no admin.
+  ordem Int
+
+  ativo    Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  aulas Aula[]
+
+  @@map("modulos")
+}
+
+// Uma aula de video dentro de um modulo. `prazoAcessoDias` e relativo a
+// quando o CONTEUDO foi publicado, nao a quando cada mentorado assiste —
+// e assim que o handoff descreve o selo "Acesso por mais N dias": um
+// prazo fixo por aula, igual pra todo mundo que ve ela.
+model Aula {
+  id       String @id @default(uuid())
+  modulo   Modulo @relation(fields: [moduloId], references: [id])
+  moduloId String
+
+  titulo    String
+  descricao String? // aparece em "Nesta aula"
+
+  video   Video?  @relation(fields: [videoId], references: [id])
+  videoId String?
+
+  materialUrl String? // PDF anexo (Cloudinary, resource_type raw)
+
+  ordem Int
+
+  // Sem prazo = null = acesso enquanto a assinatura estiver ativa. Com
+  // prazo = dias contados a partir de `publicadoEm`. Calculado no server
+  // (nunca no cliente), como o handoff exige explicitamente.
+  prazoAcessoDias Int?
+
+  status      StatusPublicacao @default(RASCUNHO)
+  publicadoEm DateTime?
+
+  // "Quem ve": planos de MENTORIA que liberam essa aula. Vazio = invisivel
+  // pra todo mundo (rascunho de visibilidade, nao so de conteudo).
+  planosVisiveis Plano[]
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  progresso          Progresso[]
+  mensagensAncoradas Mensagem[]
+
+  @@unique([moduloId, ordem])
+  @@map("aulas")
+}
+
+// Posicao de reproducao de UM usuario em UMA aula — "retomar de onde
+// parou" (handoff, Interacoes e comportamento). `concluida` tambem marca
+// automaticamente ao passar de ~95% (regra aplicada na action, nao aqui).
+model Progresso {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+  aula      Aula    @relation(fields: [aulaId], references: [id])
+  aulaId    String
+
+  posicaoSegundos Int     @default(0)
+  concluida       Boolean @default(false)
+
+  atualizadoEm DateTime @updatedAt
+
+  @@unique([usuarioId, aulaId])
+  @@map("progresso_aulas")
+}
+
+// Masterclass/bonus com janela de disponibilidade. O contador que o
+// mentorado ve ("Disponivel por mais 18h") e sempre `expiraEm - agora`,
+// calculado no server — os campos abaixo sao a unica fonte de verdade.
+model Bonus {
+  id String @id @default(uuid())
+
+  titulo    String
+  descricao String?
+
+  video   Video?  @relation(fields: [videoId], references: [id])
+  videoId String?
+
+  liberaEm DateTime @default(now())
+  expiraEm DateTime
+
+  destaque Boolean @default(false)
+
+  notificarPush  Boolean @default(false)
+  lembrar3hAntes Boolean @default(false)
+
+  criadoEm DateTime @default(now())
+
+  @@map("bonus")
+}
+
+// Post da comunidade fechada dos mentorados. `ticketAntes`/`ticketDepois`
+// so fazem sentido quando `tipo = RESULTADO` (handoff 5e: comparativo de
+// ticket antes/depois) — ficam null nos outros tipos.
+model Post {
+  id String @id @default(uuid())
+
+  autor   Usuario  @relation(fields: [autorId], references: [id])
+  autorId String
+  tipo    TipoPost @default(GERAL)
+
+  texto String
+
+  ticketAntes  Decimal? @db.Decimal(10, 2)
+  ticketDepois Decimal? @db.Decimal(10, 2)
+
+  // "Destacar" (handoff 6e) fixa o post no topo do feed. "Ocultar" remove
+  // do feed mantendo o registro — nunca DELETE, so essa flag.
+  destacado Boolean @default(false)
+  oculto    Boolean @default(false)
+
+  criadoEm DateTime @default(now())
+
+  comentarios Comentario[]
+  curtidas    Curtida[]
+
+  @@map("posts")
+}
+
+// Comentario num post, com aninhamento de 1 nivel (resposta a um
+// comentario) via `paiId` opcional — suficiente pro "filete dourado a
+// esquerda" do handoff, sem precisar de arvore recursiva de verdade.
+model Comentario {
+  id String @id @default(uuid())
+
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String
+
+  autor   Usuario @relation(fields: [autorId], references: [id])
+  autorId String
+
+  pai       Comentario?  @relation("RespostasComentario", fields: [paiId], references: [id])
+  paiId     String?
+  respostas Comentario[] @relation("RespostasComentario")
+
+  texto String
+
+  criadoEm DateTime @default(now())
+
+  @@map("comentarios")
+}
+
+// "Curtir e otimista" (handoff) — precisa persistir quem curtiu pra saber
+// se o coracao fica dourado ao recarregar, e pra impedir curtida duplicada
+// (unique usuario+post).
+model Curtida {
+  id String @id @default(uuid())
+
+  post      Post    @relation(fields: [postId], references: [id])
+  postId    String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  criadoEm DateTime @default(now())
+
+  @@unique([postId, usuarioId])
+  @@map("curtidas")
 }
