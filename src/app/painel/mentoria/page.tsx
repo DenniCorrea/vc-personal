@@ -19,17 +19,17 @@ export default async function PaginaMentoria() {
     where: { usuarioId: session.user.id, status: "ATIVA" },
   });
 
+  // Sem <main> com padding/max-width proprios: desde 28/08/2026 esta tela
+  // roda dentro da casca do mentorado (sidebar no desktop, bottom nav no
+  // mobile), que ja aplica o gutter e a largura maxima. Manter os antigos
+  // duplicava o espacamento.
   if (!assinatura) {
     return (
-      <main className="mx-auto max-w-md px-4 py-12">
-        <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-          Mentoria
-        </p>
-        <h1 className="mt-1 font-display text-3xl font-semibold text-ink">
-          Você ainda não tem acesso
-        </h1>
-        <p className="mt-2 text-ink-soft">Assine a mentoria pra desbloquear o conteúdo.</p>
-        <Link href="/painel/planos" className="mt-4 inline-block text-sm font-medium text-accent">
+      <main className="max-w-md pb-10">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Mentoria</p>
+        <h1 className="font-display mt-1 text-[28px] text-ink">Você ainda não tem acesso</h1>
+        <p className="mt-2 text-[14px] text-ink-soft">Assine a mentoria pra desbloquear o conteúdo.</p>
+        <Link href="/painel/planos" className="mt-4 inline-block text-[13px] font-medium text-accent">
           Ver planos
         </Link>
       </main>
@@ -46,11 +46,9 @@ export default async function PaginaMentoria() {
   });
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12">
-      <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
-        Mentoria
-      </p>
-      <h1 className="mt-1 font-display text-3xl font-semibold text-ink">Conteúdo</h1>
+    <main className="max-w-3xl pb-10">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Mentoria</p>
+      <h1 className="font-display mt-1 text-[32px] text-ink md:text-[36px]">Módulos</h1>
 
       <div className="mt-8 flex flex-col gap-10">
         {PILARES.map((pilar) => {
@@ -58,17 +56,18 @@ export default async function PaginaMentoria() {
           if (doPilar.length === 0) return null;
           return (
             <section key={pilar.valor}>
-              <h2 className="font-display text-xl font-semibold text-ink">{pilar.rotulo}</h2>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Pilar</p>
+              <h2 className="font-display mt-1 text-[23px] text-ink">{pilar.rotulo}</h2>
               <div className="mt-4 flex flex-col gap-6">
                 {doPilar.map((conteudo) => (
-                  <div key={conteudo.id} className="rounded-lg border border-line bg-paper-raised p-4">
-                    <p className="font-medium text-ink">
+                  <div key={conteudo.id} className="rounded-[4px] border border-line bg-card p-5">
+                    <p className="text-[15px] font-medium text-ink">
                       {conteudo.titulo}{" "}
                       {conteudo.tipo === "SEMANAL" && (
-                        <span className="text-xs font-normal text-accent">novo</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-accent">novo</span>
                       )}
                     </p>
-                    {conteudo.descricao && <p className="mt-1 text-sm text-ink-soft">{conteudo.descricao}</p>}
+                    {conteudo.descricao && <p className="mt-1 text-[13px] text-ink-soft">{conteudo.descricao}</p>}
                     {conteudo.video && (
                       <div className="mt-3">
                         <VimeoPlayer
@@ -85,13 +84,9 @@ export default async function PaginaMentoria() {
           );
         })}
         {conteudos.length === 0 && (
-          <p className="text-sm text-ink-soft">Nenhum conteúdo publicado ainda.</p>
+          <p className="text-[13px] text-ink-soft">Nenhum conteúdo publicado ainda.</p>
         )}
       </div>
-
-      <Link href="/painel" className="mt-10 inline-block text-sm text-ink-soft hover:text-ink">
-        ← Voltar pro painel
-      </Link>
     </main>
   );
 }

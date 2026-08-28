@@ -70,7 +70,7 @@ export function VideoBottomSheet({ video, onFechar }: { video: VideoSheetInfo | 
         onTouchEnd={aoTocarFim}
       >
         <div className="flex justify-center pt-2.5 pb-1 lg:hidden">
-          <div className="h-1 w-11 rounded-full" style={{ background: "rgba(237,233,227,0.25)" }} />
+          <div className="h-1 w-11 rounded-full" style={{ background: "rgba(232,227,218,0.25)" }} />
         </div>
 
         <div className="aspect-video w-full overflow-hidden bg-black">

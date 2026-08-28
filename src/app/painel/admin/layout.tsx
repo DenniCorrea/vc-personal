@@ -62,7 +62,7 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/painel/adm
             </div>
             <div className="hidden min-w-0 lg:block">
               <p className="truncate text-[13px] text-ink">{session.user.name}</p>
-              <p className="text-[11px] text-ink-faint">Consultor</p>
+              <p className="text-[11px] text-ink-soft">Consultor</p>
             </div>
             <form action={sair}>
               <button
@@ -95,7 +95,7 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/painel/adm
           ))}
         </nav>
 
-        <p className="mt-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-faint lg:mt-6">
+        <p className="mt-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-subtle lg:mt-6">
           Outros
         </p>
         <nav className="mt-1 flex gap-1 overflow-x-auto lg:flex-col lg:gap-0.5 lg:overflow-visible">
@@ -103,7 +103,7 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/painel/adm
             <Link
               key={item.href}
               href={item.href}
-              className="shrink-0 whitespace-nowrap rounded-[2px] px-3 py-2 text-[12px] text-ink-faint hover:text-ink-soft"
+              className="shrink-0 whitespace-nowrap rounded-[2px] px-3 py-2 text-[12px] text-ink-soft hover:text-ink"
             >
               {item.rotulo}
             </Link>

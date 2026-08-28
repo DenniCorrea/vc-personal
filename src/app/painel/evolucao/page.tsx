@@ -70,12 +70,12 @@ export default async function PaginaEvolucao() {
                     {item.primeira} → {item.ultima} kg
                   </p>
                 </div>
-                <div className="mt-1.5 h-[3px] w-full rounded-full" style={{ background: "rgba(237,233,227,0.12)" }}>
+                <div className="mt-1.5 h-[3px] w-full rounded-full" style={{ background: "rgba(232,227,218,0.12)" }}>
                   <div
                     className="h-full rounded-full"
                     style={{
                       width: item.ultima > 0 ? `${Math.min(100, (item.ultima / (item.ultima * 1.2)) * 100)}%` : "0%",
-                      background: item.evoluiu ? "var(--color-accent)" : "rgba(237,233,227,0.35)",
+                      background: item.evoluiu ? "var(--color-accent)" : "rgba(232,227,218,0.35)",
                     }}
                   />
                 </div>

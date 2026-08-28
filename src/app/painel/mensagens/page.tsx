@@ -26,7 +26,7 @@ export default async function PaginaMensagens() {
               <div
                 className="max-w-[280px] px-4 py-2.5 text-[14px] text-ink"
                 style={{
-                  background: enviadaPeloAluno ? "rgba(201,168,124,0.14)" : "#1A1714",
+                  background: enviadaPeloAluno ? "rgba(203,163,92,0.14)" : "#171410",
                   border: enviadaPeloAluno ? "1px solid var(--color-accent-border)" : "none",
                   borderRadius: enviadaPeloAluno ? "12px 4px 12px 12px" : "4px 12px 12px 12px",
                 }}

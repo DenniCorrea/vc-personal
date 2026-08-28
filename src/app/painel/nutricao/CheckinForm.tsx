@@ -16,7 +16,7 @@ export function CheckinForm({ refeicaoId, nome, horario, composicao }: Props) {
   return (
     <section
       className="rounded-[4px] border border-accent-border p-5"
-      style={{ background: "linear-gradient(160deg, rgba(201,168,124,0.08), rgba(201,168,124,0.02))" }}
+      style={{ background: "linear-gradient(160deg, rgba(203,163,92,0.08), rgba(203,163,92,0.02))" }}
     >
       <div className="flex items-baseline justify-between">
         <p className="text-[17px] font-semibold text-ink">{nome}</p>

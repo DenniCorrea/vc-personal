@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirSessao } from "@/lib/auth-guard";
+import { exigirSessao, bloquearAlunoPausado } from "@/lib/auth-guard";
 import { VideosClient } from "./VideosClient";
 
 export default async function PaginaVideos() {
   const session = await exigirSessao();
+  bloquearAlunoPausado(session.user.role);
 
   // A protecao de verdade e essa consulta: so busca (e so existe no HTML
   // depois) video cujo `produto` bate com uma assinatura ATIVA da pessoa.

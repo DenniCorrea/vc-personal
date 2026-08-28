@@ -143,7 +143,7 @@ export default async function PaginaAgenda() {
           {treinoAtivo && (
             <div
               className="rounded-[4px] border border-accent-border p-4"
-              style={{ background: "linear-gradient(160deg, rgba(201,168,124,0.08), rgba(201,168,124,0.02))" }}
+              style={{ background: "linear-gradient(160deg, rgba(203,163,92,0.08), rgba(203,163,92,0.02))" }}
             >
               <p className="text-[15px] font-semibold text-ink">{treinoAtivo.nome}</p>
               <p className="mt-0.5 text-[12px] text-ink-soft">{treinoAtivo._count.exercicios} exercícios</p>

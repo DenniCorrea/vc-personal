@@ -30,7 +30,9 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className="flex min-h-11 flex-1 flex-col items-center gap-1 text-[10px] font-medium"
-              style={{ color: ativo ? "var(--color-accent)" : "rgba(237,233,227,0.45)" }}
+              // Mesmo motivo da nav do mentorado: rotulo de menu precisa
+              // passar no contraste minimo, e 0.45 nao passa.
+              style={{ color: ativo ? "var(--color-accent)" : "var(--color-ink-soft)" }}
             >
               <Icone />
               {item.rotulo}

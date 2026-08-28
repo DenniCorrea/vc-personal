@@ -166,7 +166,7 @@ export function ExecucaoTreinoClient({
                           autoComplete="off"
                           defaultValue={registroHoje?.carga ?? undefined}
                           className="min-w-0 rounded-[2px] border px-2 py-2.5 text-[16px] font-semibold text-ink outline-none"
-                          style={{ background: "var(--color-input)", borderColor: "rgba(237,233,227,0.14)" }}
+                          style={{ background: "var(--color-input)", borderColor: "rgba(232,227,218,0.14)" }}
                         />
                         <input
                           name="repeticoes"
@@ -176,7 +176,7 @@ export function ExecucaoTreinoClient({
                           autoComplete="off"
                           defaultValue={registroHoje?.repeticoes ?? undefined}
                           className="min-w-0 rounded-[2px] border px-2 py-2.5 text-[16px] font-semibold text-ink outline-none"
-                          style={{ background: "var(--color-input)", borderColor: "rgba(237,233,227,0.14)" }}
+                          style={{ background: "var(--color-input)", borderColor: "rgba(232,227,218,0.14)" }}
                         />
                         <span className="truncate text-right font-mono text-[11px] text-ink-faint">
                           {registroAntes ? `${registroAntes.carga ?? "—"}×${registroAntes.repeticoes ?? "—"}` : "—"}

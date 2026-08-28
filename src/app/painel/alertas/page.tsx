@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirSessao } from "@/lib/auth-guard";
+import { exigirSessao, bloquearAlunoPausado } from "@/lib/auth-guard";
 import { marcarComoLido, marcarTodosComoLidos, verificarAlertasAgora } from "./actions";
 import type { TipoAlerta } from "@/generated/prisma/enums";
 
@@ -31,6 +31,7 @@ const CORES = {
 
 export default async function PaginaAlertas() {
   const session = await exigirSessao();
+  bloquearAlunoPausado(session.user.role);
 
   const alertas = await prisma.alerta.findMany({
     where: { usuarioId: session.user.id },

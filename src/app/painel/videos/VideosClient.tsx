@@ -91,7 +91,7 @@ function LinhaVideo({ video, destaque, onClick }: { video: ItemVideo; destaque?:
     >
       <div
         className="flex h-[62px] w-[96px] shrink-0 items-center justify-center rounded-[2px]"
-        style={{ background: "rgba(237,233,227,0.06)" }}
+        style={{ background: "rgba(232,227,218,0.06)" }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--color-accent)">
           <path d="M8 5v14l11-7z" />

@@ -1,13 +1,13 @@
 {
   "name": "Victor Carvalho Personal",
   "short_name": "Método Líder",
-  "description": "Treino, nutrição, evolução e acompanhamento com o Victor Carvalho.",
+  "description": "Mentoria para personal trainers: trilha de conteúdo, sessões 1-on-1, comunidade e canal direto com o Victor.",
   "start_url": "/painel",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0E0D0C",
-  "theme_color": "#0E0D0C",
+  "background_color": "#0A0908",
+  "theme_color": "#0A0908",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

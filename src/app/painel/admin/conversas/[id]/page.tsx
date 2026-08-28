@@ -28,7 +28,7 @@ export default async function PaginaAdminConversa({ params }: PageProps<"/painel
               <div
                 className="max-w-[420px] px-4 py-2.5 text-[14px] text-ink"
                 style={{
-                  background: doAdmin ? "rgba(201,168,124,0.14)" : "var(--color-card-admin)",
+                  background: doAdmin ? "rgba(203,163,92,0.14)" : "var(--color-card-admin)",
                   border: doAdmin ? "1px solid var(--color-accent-border)" : "1px solid var(--color-line)",
                   borderRadius: doAdmin ? "12px 4px 12px 12px" : "4px 12px 12px 12px",
                 }}

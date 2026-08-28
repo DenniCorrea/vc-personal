@@ -133,7 +133,7 @@ export async function DashboardAluno({ usuarioId, nome }: { usuarioId: string; n
       {mensagem && (
         <section
           className="mt-6 rounded-[4px] border border-accent-border p-5"
-          style={{ background: "linear-gradient(160deg, rgba(201,168,124,0.10), rgba(201,168,124,0.02))" }}
+          style={{ background: "linear-gradient(160deg, rgba(203,163,92,0.10), rgba(203,163,92,0.02))" }}
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Mentalidade de hoje</p>
           <p className="font-display mt-2 text-[21px] italic leading-[1.45] text-ink">{mensagem.texto}</p>
@@ -256,7 +256,7 @@ function BarraMeta({
         <p className="text-[14px] text-ink">{titulo}</p>
         <p className="text-[13px] text-ink-soft">{valorTexto}</p>
       </div>
-      <div className="mt-2 h-[3px] w-full rounded-full" style={{ background: "rgba(237,233,227,0.12)" }}>
+      <div className="mt-2 h-[3px] w-full rounded-full" style={{ background: "rgba(232,227,218,0.12)" }}>
         <div className="h-full rounded-full bg-accent" style={{ width: `${percentual}%` }} />
       </div>
     </div>

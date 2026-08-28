@@ -58,7 +58,7 @@ export default async function PaginaNutricao() {
                 {checkin.observacaoAdaptacao && (
                   <p
                     className="mt-2 rounded-[2px] border-l-2 border-accent p-2 text-[12px] text-ink-soft"
-                    style={{ background: "rgba(201,168,124,0.06)" }}
+                    style={{ background: "rgba(203,163,92,0.06)" }}
                   >
                     {checkin.observacaoAdaptacao}
                   </p>

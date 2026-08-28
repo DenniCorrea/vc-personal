@@ -37,7 +37,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0E0D0C",
+  // Acompanha o bg/base da paleta Dark & Gold (RESPONSIVE.md do handoff
+  // B2B pede exatamente esse valor). Se divergir do fundo real, a barra de
+  // status do celular fica de uma cor e a tela de outra.
+  themeColor: "#0A0908",
   colorScheme: "dark",
   // viewport-fit=cover + env(safe-area-inset-*) sao obrigatorios (RESPONSIVE.md)
   // pra bottom nav e barras fixas respeitarem o home indicator do iPhone.

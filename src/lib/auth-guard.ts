@@ -32,6 +32,19 @@ export async function exigirSessao() {
   return session;
 }
 
+// Fecha a area do aluno nas paginas que usam `exigirSessao()` em vez de
+// `exigirPapel()` — a checagem de pausa vive dentro do exigirPapel, entao
+// essas passariam batido (foi o que a auditoria de 28/08 pegou:
+// /painel/alertas e /painel/videos continuavam abertas com a area pausada).
+//
+// /painel/dados de proposito NAO chama isso: mesmo com a area pausada, a
+// pessoa precisa continuar conseguindo trocar a senha, baixar os proprios
+// dados e pedir exclusao da conta — sao direitos da LGPD (art. 18), nao
+// funcionalidade do produto que da pra suspender.
+export function bloquearAlunoPausado(role: Role) {
+  if (role === "ALUNO" && ALUNO_PAUSADO) redirect("/painel");
+}
+
 export async function exigirPapel(...papeis: Role[]) {
   const session = await exigirSessao();
   if (!papeis.includes(session.user.role)) redirect("/painel");

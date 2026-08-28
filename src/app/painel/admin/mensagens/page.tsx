@@ -29,7 +29,7 @@ export default async function PaginaAdminMensagens() {
       <div className="mt-6 grid grid-cols-[1fr_320px] gap-6">
         <div
           className="rounded-[4px] border border-accent-border p-6"
-          style={{ background: "linear-gradient(160deg, rgba(201,168,124,0.08), rgba(201,168,124,0.02))" }}
+          style={{ background: "linear-gradient(160deg, rgba(203,163,92,0.08), rgba(203,163,92,0.02))" }}
         >
           {atual ? (
             <>

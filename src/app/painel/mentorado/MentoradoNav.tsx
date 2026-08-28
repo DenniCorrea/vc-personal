@@ -8,9 +8,14 @@ import { sair } from "../actions";
 // Desktop: sidebar fixa 248px. Mobile: bottom nav de 5 itens, com o resto
 // acessivel pelo Inicio (handoff: "Minhas sessoes, Materiais, Meu plano
 // ficam acessiveis pelo Inicio e pelo avatar/perfil").
+// "Módulos" aponta pra /painel/mentoria (a tela de conteudo por pilar que
+// ja existe e ja tem conteudo publicado pelo Victor), NAO pra uma tela nova
+// vazia: a trilha estruturada (Modulo/Aula) ainda nao tem nem dado nem a
+// tela de gestao no painel do mentor pra alimenta-la. Quando ela existir,
+// e so trocar esse href — o rotulo pro mentorado ja e o definitivo.
 const ITENS_PRINCIPAIS = [
   { href: "/painel", rotulo: "Início", icone: IconeInicio },
-  { href: "/painel/modulos", rotulo: "Módulos", icone: IconeModulos },
+  { href: "/painel/mentoria", rotulo: "Módulos", icone: IconeModulos },
   { href: "/painel/bonus", rotulo: "Bônus", icone: IconeBonus },
   { href: "/painel/comunidade", rotulo: "Comunidade", icone: IconeComunidade },
 ] as const;
@@ -21,6 +26,10 @@ const ITENS_SECUNDARIOS = [
   { href: "/painel/agenda", rotulo: "Minhas sessões" },
   { href: "/painel/materiais", rotulo: "Materiais" },
   { href: "/painel/planos", rotulo: "Meu plano" },
+  // Sem esse item o mentorado nao alcanca trocar senha, baixar os proprios
+  // dados nem pedir exclusao de conta (LGPD art. 18) — o /painel/dados so
+  // era linkado das telas do ALUNO, que estao pausadas.
+  { href: "/painel/dados", rotulo: "Minha conta" },
 ] as const;
 
 function estaAtivo(pathname: string, href: string) {
@@ -134,7 +143,11 @@ export function BottomNavMentorado({ mensagensNaoLidas }: { mensagensNaoLidas: n
               key={item.href}
               href={item.href}
               className="relative flex min-h-11 flex-1 flex-col items-center gap-1 text-[10px] font-medium"
-              style={{ color: ativo ? "var(--color-accent)" : "rgba(232,227,218,0.45)" }}
+              // ink-soft (0.55) e nao 0.45: rotulo de navegacao precisa passar
+              // no contraste minimo (0.45 da 3.75, abaixo dos 4.5 exigidos
+              // pra texto pequeno). Os alfas menores do handoff sao pra
+              // placeholder e metadado, nao pra item de menu.
+              style={{ color: ativo ? "var(--color-accent)" : "var(--color-ink-soft)" }}
             >
               <Icone />
               {item.rotulo}

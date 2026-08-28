@@ -59,7 +59,7 @@ export default async function PaginaPlanos({ searchParams }: PageProps<"/painel/
                 style={{
                   borderColor: destaque ? "var(--color-accent)" : "var(--color-line)",
                   background: destaque
-                    ? "linear-gradient(160deg, rgba(201,168,124,0.10), rgba(201,168,124,0.02))"
+                    ? "linear-gradient(160deg, rgba(203,163,92,0.10), rgba(203,163,92,0.02))"
                     : "var(--color-card)",
                 }}
               >

@@ -13,14 +13,21 @@ const ROTULO_METODO: Record<string, string> = { CARTAO: "Cartão", DEBITO: "Déb
 
 export default async function PaginaMeusDados() {
   const session = await exigirSessao();
-  const ehAluno = session.user.role !== "ADMIN";
+  // Tres papeis, tres versoes desta tela. Antes so havia `ehAluno = role
+  // !== "ADMIN"`, o que jogava o PERSONAL_PARCEIRO no molde do aluno e
+  // mostrava pra ele "Aluno desde", link de Anamnese (que redireciona pra
+  // fora, porque a rota e so de ALUNO) e altura/peso que ele nunca tem.
+  // Ficou visivel quando o mentorado passou a ter essa tela no menu.
+  const ehAluno = session.user.role === "ALUNO";
+  const ehMentorado = session.user.role === "PERSONAL_PARCEIRO";
+  const temAssinatura = ehAluno || ehMentorado;
 
   const [usuario, assinatura, ultimaAvaliacao, anamnese, habitoAgua, habitoSono] = await Promise.all([
     prisma.usuario.findUnique({
       where: { id: session.user.id },
       select: { nome: true, email: true, telefone: true, avatarUrl: true, criadoEm: true },
     }),
-    ehAluno
+    temAssinatura
       ? prisma.assinatura.findFirst({
           where: { usuarioId: session.user.id, status: { in: ["ATIVA", "PENDENTE", "ATRASADA"] } },
           include: { plano: true, pagamentos: { orderBy: { criadoEm: "desc" }, take: 1 } },
@@ -38,8 +45,10 @@ export default async function PaginaMeusDados() {
       : null,
   ]);
 
+  const rotuloPapel = ehAluno ? "Aluno" : ehMentorado ? "Mentorado" : "Consultor";
+
   return (
-    <main className="mx-auto max-w-md px-6 pt-cabecalho-aluno pb-10">
+    <main className="mx-auto max-w-md pb-10 lg:mx-0">
       <div className="flex items-center gap-4">
         {usuario?.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -57,17 +66,17 @@ export default async function PaginaMeusDados() {
           <h1 className="font-display truncate text-[24px] text-ink">{usuario?.nome}</h1>
           {usuario?.criadoEm && (
             <p className="text-[13px] text-ink-soft">
-              {ehAluno ? "Aluno" : "Consultor"} desde {formatoData.format(usuario.criadoEm)}
+              {rotuloPapel} desde {formatoData.format(usuario.criadoEm)}
             </p>
           )}
           <TrocarFotoForm />
         </div>
       </div>
 
-      {ehAluno && assinatura && (
+      {temAssinatura && assinatura && (
         <section
           className="mt-6 rounded-[4px] border border-accent-border p-5"
-          style={{ background: "linear-gradient(160deg, rgba(201,168,124,0.08), rgba(201,168,124,0.02))" }}
+          style={{ background: "linear-gradient(160deg, rgba(203,163,92,0.08), rgba(203,163,92,0.02))" }}
         >
           <div className="flex items-baseline justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Plano ativo</p>
@@ -98,12 +107,14 @@ export default async function PaginaMeusDados() {
         </section>
       )}
 
-      {ehAluno && (
-        <section className="mt-4 rounded-[4px] border border-line bg-card p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Meus dados</p>
-          <div className="mt-3 flex flex-col divide-y divide-line">
-            <LinhaDado rotulo="E-mail" valor={usuario?.email ?? "—"} />
-            <LinhaDado rotulo="Telefone" valor={usuario?.telefone ?? "—"} />
+      {/* E-mail e telefone valem pra qualquer papel. Altura/peso e anamnese
+          sao do acompanhamento de treino — so fazem sentido pro ALUNO. */}
+      <section className="mt-4 rounded-[4px] border border-line bg-card p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Meus dados</p>
+        <div className="mt-3 flex flex-col divide-y divide-line">
+          <LinhaDado rotulo="E-mail" valor={usuario?.email ?? "—"} />
+          <LinhaDado rotulo="Telefone" valor={usuario?.telefone ?? "—"} />
+          {ehAluno && (
             <LinhaDado
               rotulo="Altura · peso"
               valor={
@@ -112,15 +123,17 @@ export default async function PaginaMeusDados() {
                   : "—"
               }
             />
+          )}
+          {ehAluno && (
             <div className="flex items-center justify-between py-2.5 text-[14px]">
               <span className="text-ink-soft">Anamnese</span>
               <Link href="/painel/anamnese" className="font-medium text-accent">
                 {anamnese ? "Revisar" : "Responder"}
               </Link>
             </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {ehAluno && (habitoAgua || habitoSono) && (
         <section className="mt-4 rounded-[4px] border border-line bg-card p-5">
