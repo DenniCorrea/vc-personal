@@ -119,7 +119,7 @@ export default async function PaginaDiagnostico() {
           </button>
           {!primeiraVez && (
             <Link href="/painel" className="text-[13px] text-ink-soft hover:text-ink">
-              Voltar
+              ← Voltar
             </Link>
           )}
         </div>

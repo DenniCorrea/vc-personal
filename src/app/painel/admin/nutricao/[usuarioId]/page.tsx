@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
@@ -50,6 +51,13 @@ export default async function PaginaAdminNutricaoAluno({
 
   return (
     <main>
+      {/* Link de volta pro pai. Sem ele a unica saida e a seta do
+          navegador, que no celular joga a pessoa pra primeira tela da
+          navegacao — ela perde o lugar e precisa descer 2-3 niveis de novo
+          pra continuar editando (problema relatado em 28/08/2026). */}
+      <Link href="/painel/admin/nutricao" className="text-[13px] text-ink-soft hover:text-ink">
+        ← Planos alimentares
+      </Link>
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">{aluno.nome.toUpperCase()}</p>
       <h1 className="font-display mt-1 text-[30px] text-ink">Plano alimentar</h1>
 

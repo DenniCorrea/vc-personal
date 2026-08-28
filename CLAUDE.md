@@ -195,6 +195,20 @@ padrão:
   pessoa precisa ler, retornar estado pelo `useActionState` em vez de
   `throw`.
 
+## Navegação — toda tela interna precisa de volta
+
+Tela que só se alcança **entrando** a partir de outra (formulário de
+edição, detalhe, conversa) **precisa** de um link `← Nome do pai` no topo,
+apontando para a tela de onde se veio.
+
+Sem ele a única saída é a seta do navegador, que no celular joga a pessoa
+para a primeira tela da navegação — ela perde o lugar e tem que descer dois
+ou três níveis de novo para continuar de onde parou. Voltar ao início já é
+função do menu; o botão resolve o "voltar um passo", que é o que falta.
+
+Telas que **são** item de menu (sidebar, bottom nav) não precisam: a
+navegação principal está sempre visível nelas.
+
 ## Banco de dados — cuidado redobrado
 
 **Existe UM banco só, compartilhado entre desenvolvimento e produção.** Não

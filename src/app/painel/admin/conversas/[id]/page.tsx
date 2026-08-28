@@ -29,6 +29,13 @@ export default async function PaginaAdminConversa({ params }: PageProps<"/painel
 
   return (
     <main className="flex h-[calc(100dvh-72px)] flex-col">
+      {/* Link de volta pro pai. Sem ele a unica saida e a seta do
+          navegador, que no celular joga a pessoa pra primeira tela da
+          navegacao — ela perde o lugar e precisa descer 2-3 niveis de novo
+          pra continuar editando (problema relatado em 28/08/2026). */}
+      <Link href="/painel/admin/conversas" className="text-[13px] text-ink-soft hover:text-ink">
+        ← Mensagens
+      </Link>
       <p className="font-display text-[24px] text-ink">{aluno.nome}</p>
 
       <div className="mt-4 flex flex-1 flex-col gap-3 overflow-y-auto">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
@@ -17,6 +18,13 @@ export default async function PaginaExercicio({ params }: { params: Promise<{ id
 
   return (
     <main className="mx-auto max-w-md px-4 py-12">
+      {/* Link de volta pro pai. Sem ele a unica saida e a seta do
+          navegador, que no celular joga a pessoa pra primeira tela da
+          navegacao — ela perde o lugar e precisa descer 2-3 niveis de novo
+          pra continuar editando (problema relatado em 28/08/2026). */}
+      <Link href="/painel/admin/exercicios" className="text-[13px] text-ink-soft hover:text-ink">
+        ← Exercícios
+      </Link>
       <p className="font-display text-xs font-semibold uppercase tracking-widest text-accent">
         Admin
       </p>

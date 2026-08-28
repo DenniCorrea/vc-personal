@@ -59,6 +59,13 @@ export default async function PaginaAdminAlunoDetalhe({ params }: PageProps<"/pa
 
   return (
     <main>
+      {/* Link de volta pro pai. Sem ele a unica saida e a seta do
+          navegador, que no celular joga a pessoa pra primeira tela da
+          navegacao — ela perde o lugar e precisa descer 2-3 niveis de novo
+          pra continuar editando (problema relatado em 28/08/2026). */}
+      <Link href="/painel/admin/alunos" className="text-[13px] text-ink-soft hover:text-ink">
+        ← Alunos
+      </Link>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-[18px] text-ink-soft">
