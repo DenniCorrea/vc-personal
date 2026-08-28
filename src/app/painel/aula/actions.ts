@@ -17,6 +17,22 @@ async function exigirAcessoAAula(usuarioId: string, aulaId: string) {
   if (!liberada) throw new Error("Aula não disponível no seu plano.");
 }
 
+// Salva a posicao de reproducao. Chamada a cada 15s de video e ao
+// pausar/sair — de proposito NAO chama revalidatePath: isso re-renderizaria
+// a pagina inteira no meio do video, e a posicao so precisa estar no banco
+// pra proxima visita, nao na tela agora.
+export async function salvarPosicao(aulaId: string, posicaoSegundos: number) {
+  const session = await exigirPapel("PERSONAL_PARCEIRO");
+  await exigirAcessoAAula(session.user.id, aulaId);
+
+  const posicao = Math.max(0, Math.floor(posicaoSegundos));
+  await prisma.progresso.upsert({
+    where: { usuarioId_aulaId: { usuarioId: session.user.id, aulaId } },
+    update: { posicaoSegundos: posicao },
+    create: { usuarioId: session.user.id, aulaId, posicaoSegundos: posicao },
+  });
+}
+
 export async function marcarConcluida(aulaId: string, concluida: boolean) {
   const session = await exigirPapel("PERSONAL_PARCEIRO");
   await exigirAcessoAAula(session.user.id, aulaId);

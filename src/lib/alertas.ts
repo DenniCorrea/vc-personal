@@ -128,21 +128,53 @@ export async function gerarAlertas(): Promise<{ criados: number }> {
     criados++;
   }
 
-  // 5) Lembrete de agenda — sessao comecando na proxima hora.
-  const emUmaHora = new Date();
-  emUmaHora.setMinutes(emUmaHora.getMinutes() + 60);
-  const proximosAgendamentos = await prisma.agendamento.findMany({
-    where: { status: { in: ["AGENDADO", "CONFIRMADO"] }, horario: { inicio: { gte: new Date(), lte: emUmaHora } } },
-    include: { horario: true },
-  });
-  for (const agendamento of proximosAgendamentos) {
-    await criarSeNaoExiste({
-      usuarioId: agendamento.usuarioId,
-      tipo: "AGENDA",
-      mensagem: `Sua sessão começa às ${formatoHora.format(agendamento.horario.inicio)}.`,
-      chaveDedup: `agenda:${agendamento.id}`,
+  // 5) Lembretes de sessao: 24h antes e 30min antes (regra definida pelo
+  // Victor em 28/08/2026 — antes era um lembrete so, 1h antes).
+  //
+  // A `chaveDedup` inclui QUAL lembrete e, senao o de 30min nunca seria
+  // criado: o de 24h ja teria ocupado a chave do agendamento.
+  //
+  // As janelas sao abertas pra tras (24h-25h e 0-35min) de proposito: o
+  // cron nao roda no segundo exato, entao uma janela pontual perderia o
+  // aviso. A dedup garante que rodar varias vezes dentro da janela nao
+  // duplica o alerta.
+  const agoraLembrete = new Date();
+  // Quatro lembretes (definido pelo Victor): 24h, 1h, 30min e 10min.
+  //
+  // As janelas nao se sobrepoem, senao um mesmo momento dispararia dois
+  // avisos diferentes. E cada uma e um pouco mais larga que o intervalo
+  // exato porque o cron nao roda no segundo certo — a dedup por chave
+  // garante que rodar varias vezes dentro da janela nao duplica.
+  //
+  // ATENCAO OPERACIONAL: pra o lembrete de 10min funcionar, o cron precisa
+  // rodar a cada 5 minutos. Se rodar de hora em hora, so o de 24h e o de
+  // 1h chegam a tempo.
+  const LEMBRETES = [
+    { chave: "24h", deMin: 23 * 60, ateMin: 24 * 60 + 30, texto: (h: string, d: string) => `Sua sessão é amanhã, dia ${d} às ${h}.` },
+    { chave: "1h", deMin: 50, ateMin: 70, texto: (h: string) => `Sua sessão é daqui a 1 hora, às ${h}.` },
+    { chave: "30min", deMin: 25, ateMin: 40, texto: (h: string) => `Sua sessão começa em 30 minutos, às ${h}.` },
+    { chave: "10min", deMin: 0, ateMin: 15, texto: () => `Sua aula começa em 10 minutos.` },
+  ];
+
+  for (const lembrete of LEMBRETES) {
+    const de = new Date(agoraLembrete.getTime() + lembrete.deMin * 60_000);
+    const ate = new Date(agoraLembrete.getTime() + lembrete.ateMin * 60_000);
+    const agendamentos = await prisma.agendamento.findMany({
+      where: { status: { in: ["AGENDADO", "CONFIRMADO"] }, horario: { inicio: { gte: de, lte: ate } } },
+      include: { horario: true },
     });
-    criados++;
+    for (const agendamento of agendamentos) {
+      await criarSeNaoExiste({
+        usuarioId: agendamento.usuarioId,
+        tipo: "AGENDA",
+        mensagem: lembrete.texto(
+          formatoHora.format(agendamento.horario.inicio),
+          formatoData.format(agendamento.horario.inicio),
+        ),
+        chaveDedup: `agenda:${agendamento.id}:${lembrete.chave}`,
+      });
+      criados++;
+    }
   }
 
   return { criados };

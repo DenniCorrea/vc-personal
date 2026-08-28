@@ -1,26 +1,18 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { inicioDaSemana, fimDaSemana } from "@/lib/agenda";
-import { reservarHorario, cancelarAgendamento } from "./actions";
-import { iniciarPagamentoAgendamento } from "../pagamento/actions";
 import { formatador } from "@/lib/data";
+import { inicioDoCicloAtual } from "@/lib/mentoria";
 
-const formatoDiaMes = formatador({ day: "2-digit", month: "2-digit" });
-
+const formatoDia = formatador({ weekday: "long", day: "2-digit", month: "long" });
 const formatoHora = formatador({ hour: "2-digit", minute: "2-digit" });
-const DIAS_SEMANA_CURTO = ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"];
-const MESES = [
-  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
-];
 
-const ROTULO_TIPO: Record<string, string> = {
-  VIDEO: "Vídeo",
-  PRESENCIAL: "Presencial",
-  DISTANCIA: "À distância",
-};
-
+// Agenda do mentorado — SOMENTE LEITURA desde 28/08/2026.
+//
+// Regra revisada pelo Victor: ele combina a sessao por fora (conversa,
+// WhatsApp) e marca direto no nome da pessoa; o mentorado so e avisado.
+// Por isso aqui nao ha mais lista de horarios vagos nem botao de reservar
+// — oferecer isso seria prometer um auto-atendimento que nao existe.
 export default async function PaginaAgenda() {
   const session = await exigirPapel("ALUNO", "PERSONAL_PARCEIRO");
 
@@ -31,12 +23,9 @@ export default async function PaginaAgenda() {
 
   if (!assinatura) {
     return (
-      <main className="mx-auto max-w-md px-6 pt-cabecalho-aluno pb-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Agenda</p>
-        <h1 className="font-display mt-1 text-[26px] text-ink">Você ainda não tem uma assinatura ativa</h1>
-        <p className="mt-2 text-[14px] text-ink-soft">
-          Escolha e assine um plano pra poder agendar seus atendimentos.
-        </p>
+      <main className="max-w-md pb-10">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Minhas sessões</p>
+        <h1 className="font-display mt-1 text-[28px] text-ink">Você ainda não tem assinatura ativa</h1>
         <Link href="/painel/planos" className="mt-4 inline-block text-[13px] font-medium text-accent">
           Ver planos
         </Link>
@@ -44,244 +33,103 @@ export default async function PaginaAgenda() {
     );
   }
 
-  const hoje = new Date();
-  const inicioSemana = inicioDaSemana(hoje);
-  const fimSemana = fimDaSemana(hoje);
+  const agora = new Date();
 
-  const [usoSemana, meusAgendamentos, horariosLivres, treinoAtivo] = await Promise.all([
+  const [proximas, passadas, usadasNoCiclo] = await Promise.all([
+    prisma.agendamento.findMany({
+      where: { usuarioId: session.user.id, status: { not: "CANCELADO" }, horario: { inicio: { gte: agora } } },
+      orderBy: { horario: { inicio: "asc" } },
+      include: { horario: true },
+    }),
+    prisma.agendamento.findMany({
+      where: { usuarioId: session.user.id, horario: { inicio: { lt: agora } } },
+      orderBy: { horario: { inicio: "desc" } },
+      take: 5,
+      include: { horario: true },
+    }),
     prisma.agendamento.count({
       where: {
         assinaturaId: assinatura.id,
         avulso: false,
         status: { not: "CANCELADO" },
-        horario: { inicio: { gte: inicioSemana, lt: fimSemana } },
+        horario: { inicio: { gte: inicioDoCicloAtual(assinatura.dataProximaRenovacao) } },
       },
-    }),
-    prisma.agendamento.findMany({
-      where: {
-        usuarioId: session.user.id,
-        status: { not: "CANCELADO" },
-        horario: { inicio: { gte: new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()) } },
-      },
-      include: { horario: true, pagamentos: true },
-      orderBy: { horario: { inicio: "asc" } },
-    }),
-    prisma.horario.findMany({
-      where: {
-        produto: assinatura.plano.produto,
-        ativo: true,
-        inicio: { gte: new Date() },
-        ...(assinatura.plano.produto === "ALUNO"
-          ? { tipoAtendimento: { in: assinatura.plano.tiposAtendimento } }
-          : {}),
-        agendamentos: { none: { status: { not: "CANCELADO" } } },
-      },
-      orderBy: { inicio: "asc" },
-      take: 20,
-    }),
-    prisma.treino.findFirst({
-      where: { usuarioId: session.user.id, ativo: true },
-      include: { _count: { select: { exercicios: true } } },
-      orderBy: { criadoEm: "asc" },
     }),
   ]);
 
-  const limite = assinatura.plano.limiteAgendamentos ?? 0;
-  const excedeuLimite = usoSemana >= limite;
-
-  const ehMesmoDia = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-
-  const agendamentosHoje = meusAgendamentos.filter((a) => ehMesmoDia(a.horario.inicio, hoje));
-  const agendamentosFuturos = meusAgendamentos.filter((a) => !ehMesmoDia(a.horario.inicio, hoje));
-
-  const diasSemana = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(inicioSemana);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+  const limite = assinatura.plano.limiteAgendamentos ?? null;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pt-cabecalho-aluno pb-10">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-        {MESES[hoje.getMonth()].toUpperCase()} · SEMANA {Math.ceil(hoje.getDate() / 7)}
-      </p>
-      <div className="mt-1 flex items-baseline justify-between">
-        <h1 className="font-display text-[26px] text-ink">Sua agenda</h1>
-        {limite > 0 && <p className="text-[12px] text-ink-soft">{usoSemana} de {limite} feitos</p>}
+    <main className="max-w-2xl pb-10">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Minhas sessões</p>
+      <div className="mt-1 flex flex-wrap items-baseline justify-between gap-3">
+        <h1 className="font-display text-[32px] text-ink md:text-[36px]">Agenda</h1>
+        {limite != null && (
+          <p className="text-[13px] text-ink-soft">
+            {usadasNoCiclo} de {limite >= 999 ? "∞" : limite} usadas neste ciclo
+          </p>
+        )}
       </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-1.5">
-        {diasSemana.map((d, i) => {
-          const ativo = ehMesmoDia(d, hoje);
-          return (
+      {proximas.length === 0 ? (
+        <div className="mt-6 rounded-[4px] border border-line bg-card p-6">
+          <p className="text-[14px] text-ink">Nenhuma sessão marcada.</p>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+            O Victor combina o horário com você e marca por aqui — você recebe um aviso assim
+            que ele marcar, e lembretes antes da sessão.
+          </p>
+          <Link href="/painel/mensagens" className="mt-3 inline-block text-[13px] font-medium text-accent">
+            Falar com o Victor
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-col gap-2.5">
+          {proximas.map((s, i) => (
             <div
-              key={i}
-              className="flex flex-col items-center gap-1 rounded-[2px] py-2"
+              key={s.id}
+              className="rounded-[4px] border p-5"
               style={{
-                background: ativo ? "var(--color-accent)" : "transparent",
-                border: ativo ? "none" : "1px solid var(--color-line)",
+                borderColor: i === 0 ? "var(--color-accent-border)" : "var(--color-line)",
+                background:
+                  i === 0
+                    ? "linear-gradient(150deg, rgba(203,163,92,0.11), rgba(203,163,92,0.02))"
+                    : "var(--color-card)",
               }}
             >
-              <span
-                className="text-[9px] font-semibold uppercase"
-                style={{ color: ativo ? "var(--color-accent-ink)" : "var(--color-ink-faint)" }}
-              >
-                {DIAS_SEMANA_CURTO[i]}
-              </span>
-              <span
-                className="text-[14px] font-semibold"
-                style={{ color: ativo ? "var(--color-accent-ink)" : "var(--color-ink)" }}
-              >
-                {d.getDate()}
-              </span>
+              {i === 0 && (
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Próxima</p>
+              )}
+              <p className="font-display mt-1 text-[22px] capitalize text-ink">
+                {formatoDia.format(s.horario.inicio)}
+              </p>
+              <p className="mt-0.5 font-mono text-[15px] text-ink-soft">
+                {formatoHora.format(s.horario.inicio)} — {formatoHora.format(s.horario.fim)}
+              </p>
             </div>
-          );
-        })}
-      </div>
-
-      <section className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Hoje</p>
-        <div className="mt-3 flex flex-col gap-2">
-          {treinoAtivo && (
-            <div
-              className="rounded-[4px] border border-accent-border p-4"
-              style={{ background: "linear-gradient(160deg, rgba(203,163,92,0.08), rgba(203,163,92,0.02))" }}
-            >
-              <p className="text-[15px] font-semibold text-ink">{treinoAtivo.nome}</p>
-              <p className="mt-0.5 text-[12px] text-ink-soft">{treinoAtivo._count.exercicios} exercícios</p>
-              <Link
-                href={`/painel/treinos/${treinoAtivo.id}`}
-                className="mt-3 block rounded-[2px] bg-accent py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-accent-ink hover:bg-accent-hover"
-              >
-                Iniciar treino
-              </Link>
-            </div>
-          )}
-
-          {agendamentosHoje.map((agendamento) => {
-            const pago = agendamento.pagamentos.some((p) => p.status === "APROVADO");
-            const precisaPagar = agendamento.avulso && !pago;
-            return (
-              <div
-                key={agendamento.id}
-                className="flex items-center justify-between rounded-[4px] border border-line bg-card p-4"
-              >
-                <div>
-                  <p className="text-[14px] text-ink">
-                    Sessão{agendamento.horario.tipoAtendimento && ` · ${ROTULO_TIPO[agendamento.horario.tipoAtendimento]}`}
-                  </p>
-                  <p className="text-[12px] text-ink-soft">
-                    {formatoHora.format(agendamento.horario.inicio)}
-                    {agendamento.avulso && " · avulso"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {precisaPagar ? (
-                    <form action={iniciarPagamentoAgendamento.bind(null, agendamento.id, "PIX")}>
-                      <button
-                        type="submit"
-                        className="rounded-[2px] bg-accent px-3 py-1.5 text-[11px] font-semibold uppercase text-accent-ink"
-                      >
-                        Pagar
-                      </button>
-                    </form>
-                  ) : (
-                    <form action={cancelarAgendamento.bind(null, agendamento.id)}>
-                      <button type="submit" className="text-[12px] text-ink-soft hover:text-ink">
-                        Cancelar
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {!treinoAtivo && agendamentosHoje.length === 0 && (
-            <p className="text-[13px] text-ink-soft">Nada marcado pra hoje.</p>
-          )}
+          ))}
         </div>
-      </section>
+      )}
 
-      {agendamentosFuturos.length > 0 && (
-        <section className="mt-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Próximos dias</p>
-          <div className="mt-3 flex flex-col gap-2">
-            {agendamentosFuturos.map((agendamento) => {
-              const pago = agendamento.pagamentos.some((p) => p.status === "APROVADO");
-              const precisaPagar = agendamento.avulso && !pago;
-              return (
-                <div
-                  key={agendamento.id}
-                  className="flex items-center gap-3 rounded-[4px] border border-line bg-card p-4"
-                >
-                  <div className="text-center">
-                    <p className="text-[10px] uppercase text-ink-faint">
-                      {DIAS_SEMANA_CURTO[(agendamento.horario.inicio.getDay() + 6) % 7]}
-                    </p>
-                    <p className="text-[16px] font-semibold text-ink">{agendamento.horario.inicio.getDate()}</p>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] text-ink">
-                      Sessão{agendamento.horario.tipoAtendimento && ` · ${ROTULO_TIPO[agendamento.horario.tipoAtendimento]}`}
-                    </p>
-                    <p className="text-[12px] text-ink-soft">
-                      {formatoHora.format(agendamento.horario.inicio)}
-                      {agendamento.avulso && ` · avulso${precisaPagar ? " · pagamento pendente" : ""}`}
-                    </p>
-                  </div>
-                  <form action={cancelarAgendamento.bind(null, agendamento.id)}>
-                    <button type="submit" className="shrink-0 text-[12px] text-ink-soft hover:text-ink">
-                      Cancelar
-                    </button>
-                  </form>
-                </div>
-              );
-            })}
+      {passadas.length > 0 && (
+        <section className="mt-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Sessões anteriores</p>
+          <div className="mt-3 flex flex-col gap-1.5">
+            {passadas.map((s) => (
+              <div key={s.id} className="flex items-center gap-4 rounded-[3px] border border-line px-4 py-2.5">
+                <span className="font-mono text-[12px] text-ink-faint">
+                  {formatoHora.format(s.horario.inicio)}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[13px] capitalize text-ink-soft">
+                  {formatoDia.format(s.horario.inicio)}
+                </span>
+                <span className="text-[12px] text-ink-faint">
+                  {s.status === "CANCELADO" ? "cancelada" : s.status === "CONCLUIDO" ? "realizada" : "—"}
+                </span>
+              </div>
+            ))}
           </div>
         </section>
       )}
-
-      <section className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">
-          Horários disponíveis
-        </p>
-        {excedeuLimite && (
-          <p className="mt-2 text-[12px]" style={{ color: "var(--color-warn)" }}>
-            Limite semanal atingido — a próxima reserva vira uma sessão avulsa, paga à parte.
-          </p>
-        )}
-        <div className="mt-3 flex flex-col gap-2">
-          {horariosLivres.map((horario) => (
-            <div
-              key={horario.id}
-              className="flex items-center justify-between rounded-[4px] border border-line bg-card p-4"
-            >
-              <p className="text-[14px] text-ink">
-                {formatoDiaMes.format(horario.inicio)} ·{" "}
-                {formatoHora.format(horario.inicio)}
-                {horario.tipoAtendimento && ` · ${ROTULO_TIPO[horario.tipoAtendimento]}`}
-              </p>
-              <form action={reservarHorario.bind(null, horario.id, excedeuLimite)}>
-                <button
-                  type="submit"
-                  className="rounded-[2px] bg-accent px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent-ink hover:bg-accent-hover"
-                >
-                  {excedeuLimite ? "Avulso" : "Reservar"}
-                </button>
-              </form>
-            </div>
-          ))}
-          {horariosLivres.length === 0 && (
-            <p className="text-[13px] text-ink-soft">Nenhum horário disponível no momento.</p>
-          )}
-        </div>
-      </section>
-
-      <Link href="/painel" className="mt-10 inline-block text-[13px] text-ink-soft hover:text-ink">
-        ← Voltar pro painel
-      </Link>
     </main>
   );
 }

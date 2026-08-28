@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { trilhaDoUsuario } from "@/lib/trilha";
-import { VimeoPlayer } from "@/components/VimeoPlayer";
 import { marcarConcluida } from "../actions";
+import { PlayerAula } from "./PlayerAula";
 import { DuvidaDaAulaForm } from "./DuvidaDaAulaForm";
 
 // Player de aula (handoff, tela 5c). Grid 1fr | 360px no desktop; no
@@ -68,7 +68,14 @@ export default async function PaginaAula({ params }: PageProps<"/painel/aula/[id
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="min-w-0">
           {aula.video ? (
-            <VimeoPlayer vimeoId={aula.video.vimeoId} vimeoHash={aula.video.vimeoHash} titulo={aula.titulo} />
+            <PlayerAula
+              aulaId={aula.id}
+              vimeoId={aula.video.vimeoId}
+              vimeoHash={aula.video.vimeoHash}
+              titulo={aula.titulo}
+              posicaoInicial={aula.meuProgresso?.posicaoSegundos ?? 0}
+              jaConcluida={concluida}
+            />
           ) : (
             <div
               className="flex aspect-video items-center justify-center rounded-[4px] border border-line"

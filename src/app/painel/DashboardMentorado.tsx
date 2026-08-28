@@ -11,7 +11,7 @@ const formatoData = formatador({ day: "2-digit", month: "short" });
 // honesto ate a Fase de gestao de conteudo (6b) existir e o Victor cadastrar
 // modulos/aulas de verdade — nao ha o que fingir aqui.
 export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: string; nome: string }) {
-  const [assinatura, mentalidade, alertasNaoLidos, semanaZero] = await Promise.all([
+  const [assinatura, mentalidade, alertasNaoLidos, semanaZero, diagnostico] = await Promise.all([
     prisma.assinatura.findFirst({
       where: { usuarioId, status: { in: ["ATIVA", "PENDENTE", "ATRASADA"] } },
       include: { plano: true },
@@ -23,6 +23,7 @@ export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: strin
     }),
     prisma.alerta.count({ where: { usuarioId, lido: false } }),
     prisma.assinatura.findFirst({ where: { usuarioId }, orderBy: { criadoEm: "asc" }, select: { criadoEm: true } }),
+    prisma.diagnostico.findUnique({ where: { usuarioId } }),
   ]);
 
   const sessoesUsadas =
@@ -64,6 +65,28 @@ export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: strin
           )}
         </Link>
       </div>
+
+      {/* Sem diagnostico a plataforma e uma tela vazia no dia 1, e o
+          Victor comeca a mentoria sem saber com quem esta falando. Com ele,
+          nasce a linha de base que vira a prova de resultado depois. */}
+      {!diagnostico && (
+        <Link
+          href="/painel/diagnostico"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-accent-border p-5 hover:bg-accent-wash"
+          style={{ background: "linear-gradient(150deg, rgba(203,163,92,0.11), rgba(203,163,92,0.02))" }}
+        >
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Comece por aqui</p>
+            <p className="font-display mt-1 text-[22px] text-ink">Onde você está hoje?</p>
+            <p className="mt-1 text-[13px] text-ink-soft">
+              Três perguntas. É contra isso que vamos medir o seu resultado.
+            </p>
+          </div>
+          <span className="rounded-[2px] bg-accent px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent-ink">
+            Responder
+          </span>
+        </Link>
+      )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.35fr_1fr]">
         {/* Card de status do plano */}
@@ -146,16 +169,27 @@ export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: strin
         </section>
       </div>
 
-      {/* Continue de onde parou */}
-      <section className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Continue de onde parou</p>
-        <div className="mt-3 rounded-[4px] border border-line bg-card p-6">
-          <p className="text-[13px] text-ink-soft">
-            Nenhuma aula disponível ainda. O Victor está preparando a trilha —
-            avise quando a primeira aula for publicada.
-          </p>
-        </div>
-      </section>
+      {diagnostico?.ticketAtual != null &&
+        Number(diagnostico.ticketAtual) !== Number(diagnostico.ticketInicial) && (
+          <section className="mt-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">
+              Seu resultado até aqui
+            </p>
+            <Link
+              href="/painel/diagnostico"
+              className="mt-3 flex flex-wrap items-baseline gap-3 rounded-[4px] border border-line bg-card p-5 hover:border-accent-border"
+            >
+              <span className="text-[16px] text-ink-soft">
+                {formatoMoeda.format(Number(diagnostico.ticketInicial))}
+              </span>
+              <span className="text-ink-faint">→</span>
+              <span className="text-[24px] font-semibold text-accent">
+                {formatoMoeda.format(Number(diagnostico.ticketAtual))}
+              </span>
+              <span className="text-[12px] text-ink-soft">por aluno/mês</span>
+            </Link>
+          </section>
+        )}
 
       {/* Avisos */}
       <section className="mt-6">

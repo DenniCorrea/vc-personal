@@ -209,6 +209,7 @@ model Usuario {
   mensagensEnviadas Mensagem[]          @relation("AutorMensagem")
 
   // --- Mentoria B2B (28/08/2026) ---
+  diagnostico    Diagnostico?
   progressoAulas Progresso[]
   posts          Post[]
   comentarios    Comentario[]
@@ -1089,4 +1090,39 @@ model Curtida {
 
   @@unique([postId, usuarioId])
   @@map("curtidas")
+}
+
+// Diagnostico do mentorado no primeiro acesso (28/08/2026).
+//
+// Serve a tres coisas ao mesmo tempo, e a terceira e a que mais importa
+// pro negocio: (1) o Victor entende com quem esta falando antes da
+// primeira sessao; (2) a plataforma deixa de ser uma tela vazia no dia 1;
+// (3) cria a LINHA DE BASE do resultado. Sem isso, o "ticket antes ->
+// depois" so existe quando alguem resolve contar num post da comunidade —
+// com isso, o Victor tem prova agregada real do que a mentoria entrega,
+// que e argumento de venda, nao so metrica.
+//
+// `ticketAtual` e revisitavel: a ideia e o mentorado atualizar de tempos
+// em tempos, e a diferenca contra `ticketInicial` virar o resultado dele.
+model Diagnostico {
+  id String @id @default(uuid())
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String  @unique
+
+  // Snapshot da entrada — nunca muda depois de gravado.
+  ticketInicial Decimal @db.Decimal(10, 2)
+  alunosInicial Int
+  // Texto livre: o gargalo que a pessoa mesma identifica. Vale mais como
+  // insumo de conversa do que como categoria fechada.
+  maiorGargalo  String
+
+  // Atualizavel — e o que gera a comparacao.
+  ticketAtual Decimal? @db.Decimal(10, 2)
+  alunosAtual Int?
+
+  respondidoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("diagnosticos")
 }
