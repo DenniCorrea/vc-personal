@@ -11,8 +11,10 @@ import { sair } from "../actions";
 const ITENS_MENTORIA = [
   { href: "/painel/admin", rotulo: "Visão do dia" },
   { href: "/painel/admin/trilha", rotulo: "Trilha de conteúdo" },
+  { href: "/painel/admin/bonus", rotulo: "Bônus" },
   { href: "/painel/admin/videos", rotulo: "Vídeos" },
   { href: "/painel/admin/conversas", rotulo: "Mensagens" },
+  { href: "/painel/admin/comunidade", rotulo: "Comunidade" },
   { href: "/painel/admin/mensagens", rotulo: "Mentalidade do dia" },
   { href: "/painel/admin/horarios", rotulo: "Horários de sessão" },
   { href: "/painel/admin/planos", rotulo: "Planos e pagamentos" },
