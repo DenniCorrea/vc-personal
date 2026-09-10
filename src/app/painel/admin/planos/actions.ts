@@ -26,9 +26,18 @@ const planoAlunoSchema = z.object({
   beneficios: z.string().optional(),
 });
 
+// `limiteAgendamentos` e o que o plano da de sessao 1-on-1 por ciclo. Ate
+// 10/09/2026 o formulario de mentoria nao tinha esse campo, entao TODO plano
+// criado pelo Victor nascia com o limite `null` — e `null` faz a linha "X de
+// Y usadas" simplesmente sumir da agenda e do painel do mentorado. O plano
+// parecia certo no admin e chegava mudo pra quem assinava.
+//
+// 999 = ilimitado (a tela troca por "∞"). Nao ha `null` valido aqui: plano de
+// mentoria sempre declara quantas sessoes entrega, nem que seja zero.
 const planoMentoriaSchema = z.object({
   nome: z.string().trim().min(2),
   descricao: z.string().trim().min(2),
+  limiteAgendamentos: z.coerce.number().int().min(0).max(999),
   preco: z.coerce.number().positive(),
   precoAvulso: numeroOpcional(),
   beneficios: z.string().optional(),
@@ -87,6 +96,7 @@ export async function salvarPlanoMentoria(id: string, formData: FormData) {
     produto: "MENTORIA" as const,
     nome: parsed.data.nome,
     descricao: parsed.data.descricao,
+    limiteAgendamentos: parsed.data.limiteAgendamentos,
     preco: parsed.data.preco,
     precoAvulso: parsed.data.precoAvulso ?? null,
     beneficios: linhasParaBeneficios(parsed.data.beneficios),

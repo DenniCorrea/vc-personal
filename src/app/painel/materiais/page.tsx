@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { exigirPapel } from "@/lib/auth-guard";
+import { motivoDoBloqueio } from "@/lib/acesso";
+import { SemAcesso } from "@/components/SemAcesso";
 import { trilhaDoUsuario } from "@/lib/trilha";
 
 // Materiais (handoff: item da sidebar do mentorado). Nao e um repositorio
@@ -9,6 +11,16 @@ import { trilhaDoUsuario } from "@/lib/trilha";
 export default async function PaginaMateriais() {
   const session = await exigirPapel("PERSONAL_PARCEIRO");
   const { semPlano, modulos } = await trilhaDoUsuario(session.user.id);
+
+  if (semPlano) {
+    return (
+      <SemAcesso
+        situacao={await motivoDoBloqueio(session.user.id)}
+        area="Materiais"
+        oQueDesbloqueia="os materiais de apoio"
+      />
+    );
+  }
 
   const materiais = modulos.flatMap((m) =>
     m.aulas
@@ -24,14 +36,7 @@ export default async function PaginaMateriais() {
         Todo material de apoio das aulas que você tem acesso, reunido aqui.
       </p>
 
-      {semPlano ? (
-        <div className="mt-6 max-w-md">
-          <p className="text-[14px] text-ink-soft">Assine um plano de mentoria pra acessar os materiais.</p>
-          <Link href="/painel/planos" className="mt-3 inline-block text-[13px] font-medium text-accent">
-            Ver planos
-          </Link>
-        </div>
-      ) : materiais.length === 0 ? (
+      {materiais.length === 0 ? (
         <div className="mt-6 rounded-[4px] border border-line bg-card p-6">
           <p className="text-[13px] text-ink-soft">Nenhum material disponível ainda.</p>
         </div>

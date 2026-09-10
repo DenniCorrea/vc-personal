@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { motivoDoBloqueio } from "@/lib/acesso";
+import { SemAcesso } from "@/components/SemAcesso";
 import { VimeoPlayer } from "@/components/VimeoPlayer";
 import type { Pilar } from "@/generated/prisma/enums";
 
@@ -25,14 +26,11 @@ export default async function PaginaMentoria() {
   // duplicava o espacamento.
   if (!assinatura) {
     return (
-      <main className="max-w-md pb-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Mentoria</p>
-        <h1 className="font-display mt-1 text-[28px] text-ink">Você ainda não tem acesso</h1>
-        <p className="mt-2 text-[14px] text-ink-soft">Assine a mentoria pra desbloquear o conteúdo.</p>
-        <Link href="/painel/planos" className="mt-4 inline-block text-[13px] font-medium text-accent">
-          Ver planos
-        </Link>
-      </main>
+      <SemAcesso
+        situacao={await motivoDoBloqueio(session.user.id)}
+        area="Mentoria"
+        oQueDesbloqueia="o conteúdo da mentoria"
+      />
     );
   }
 

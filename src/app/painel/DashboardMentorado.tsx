@@ -38,6 +38,11 @@ export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: strin
         })
       : 0;
 
+  // "Em dia" e o que decide se o cartao mostra beneficio (sessoes, upgrade)
+  // ou cobranca (renovar). ATRASADA e PENDENTE nao dao acesso a nada, entao
+  // anunciar sessoes disponiveis nesses estados e promessa que a proxima
+  // tela quebra.
+  const emDia = assinatura?.status === "ATIVA";
   const limite = assinatura?.plano.limiteAgendamentos ?? null;
   const disponiveis = limite != null ? Math.max(0, limite - sessoesUsadas) : null;
 
@@ -100,12 +105,20 @@ export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: strin
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">Seu plano</p>
                   <h2 className="font-display mt-1 text-[28px] text-ink md:text-[30px]">{assinatura.plano.nome}</h2>
-                  <p className="mt-1 text-[13px] text-ink-soft">
-                    {formatoMoeda.format(Number(assinatura.plano.preco))}/mês · renova em{" "}
-                    {formatoData.format(assinatura.dataProximaRenovacao)}
+                  {/* "renova em <data>" so faz sentido enquanto a assinatura
+                      esta em dia. Vencida, a mesma frase anunciava uma
+                      renovacao numa data JA PASSADA — a tela dizia que estava
+                      tudo certo enquanto o acesso ja tinha caido. */}
+                  <p className="mt-1 text-[13px]" style={{ color: emDia ? "var(--color-ink-soft)" : "var(--color-warn)" }}>
+                    {formatoMoeda.format(Number(assinatura.plano.preco))}/mês ·{" "}
+                    {emDia
+                      ? `renova em ${formatoData.format(assinatura.dataProximaRenovacao)}`
+                      : assinatura.status === "PENDENTE"
+                        ? "aguardando confirmação do pagamento"
+                        : `venceu em ${formatoData.format(assinatura.dataProximaRenovacao)}`}
                   </p>
                 </div>
-                {limite != null && (
+                {emDia && limite != null && (
                   <div className="text-right">
                     <p className="text-[34px] font-semibold leading-none text-ink" style={{ letterSpacing: "-0.02em" }}>
                       {sessoesUsadas} <span className="text-ink-faint">de {limite}</span>
@@ -115,7 +128,7 @@ export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: strin
                 )}
               </div>
 
-              {limite != null && limite > 0 && limite <= 20 && (
+              {emDia && limite != null && limite > 0 && limite <= 20 && (
                 <div className="mt-4 flex gap-1">
                   {Array.from({ length: limite }, (_, i) => (
                     <span
@@ -127,20 +140,38 @@ export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: strin
                 </div>
               )}
 
-              <div className="mt-5 flex flex-wrap gap-2.5">
-                <Link
-                  href="/painel/agenda"
-                  className="rounded-[2px] border border-line px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink hover:border-accent-border"
-                >
-                  Agendar sessão
-                </Link>
-                <Link
-                  href="/painel/planos"
-                  className="rounded-[2px] bg-accent px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent-ink hover:bg-accent-hover"
-                >
-                  Fazer upgrade
-                </Link>
-              </div>
+              {/* Vencido, "Agendar sessão" e "Fazer upgrade" mandam a pessoa
+                  pra telas que vao barra-la. A unica acao util e renovar. */}
+              {emDia ? (
+                <div className="mt-5 flex flex-wrap gap-2.5">
+                  <Link
+                    href="/painel/agenda"
+                    className="rounded-[2px] border border-line px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink hover:border-accent-border"
+                  >
+                    Agendar sessão
+                  </Link>
+                  <Link
+                    href="/painel/planos"
+                    className="rounded-[2px] bg-accent px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent-ink hover:bg-accent-hover"
+                  >
+                    Fazer upgrade
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-5">
+                  <p className="text-[13px] leading-relaxed text-ink-soft">
+                    {assinatura.status === "PENDENTE"
+                      ? "Assim que o pagamento for confirmado, tudo libera automaticamente."
+                      : "Enquanto não renovar, módulos, bônus, comunidade e sessões ficam bloqueados. Seu progresso continua salvo."}
+                  </p>
+                  <Link
+                    href="/painel/planos"
+                    className="mt-3 inline-block rounded-[2px] bg-accent px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent-ink hover:bg-accent-hover"
+                  >
+                    {assinatura.status === "PENDENTE" ? "Concluir pagamento" : "Renovar plano"}
+                  </Link>
+                </div>
+              )}
             </>
           ) : (
             <>

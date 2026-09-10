@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { assinarPlano, trocarPlano, cancelarMinhaAssinatura } from "./actions";
+import { BotaoPlano } from "./BotaoPlano";
 import { iniciarPagamentoAssinatura } from "../pagamento/actions";
 import type { Produto } from "@/generated/prisma/enums";
 
@@ -22,7 +23,7 @@ const PRODUTO_POR_ROLE: Record<"ALUNO" | "PERSONAL_PARCEIRO", Produto> = {
 
 export default async function PaginaPlanos({ searchParams }: PageProps<"/painel/planos">) {
   const session = await exigirPapel("ALUNO", "PERSONAL_PARCEIRO");
-  const { trocar } = await searchParams;
+  const { trocar, trocado } = await searchParams;
 
   const assinaturaAtual = await prisma.assinatura.findFirst({
     where: { usuarioId: session.user.id, status: { in: ["PENDENTE", "ATIVA", "ATRASADA"] } },
@@ -41,6 +42,7 @@ export default async function PaginaPlanos({ searchParams }: PageProps<"/painel/
     });
     const acao = trocar ? trocarPlano : assinarPlano;
     const indiceDestaque = planos.length >= 3 ? Math.floor(planos.length / 2) : -1;
+    const planoAtualId = assinaturaAtual?.planoId ?? null;
 
     return (
       <main className="mx-auto max-w-3xl px-6 py-16">
@@ -51,21 +53,27 @@ export default async function PaginaPlanos({ searchParams }: PageProps<"/painel/
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {planos.map((plano, indice) => {
-            const destaque = indice === indiceDestaque;
+            // O plano que a pessoa ja tem nao ganha botao de trocar: clicar
+            // nele nao tem o que fazer, e era justamente esse clique que
+            // derrubava a tela com erro de servidor.
+            const atual = plano.id === planoAtualId;
+            const destaque = !atual && indice === indiceDestaque;
+            const realce = atual || destaque;
+
             return (
               <div
                 key={plano.id}
                 className="relative flex flex-col rounded-[4px] border p-5"
                 style={{
-                  borderColor: destaque ? "var(--color-accent)" : "var(--color-line)",
-                  background: destaque
+                  borderColor: realce ? "var(--color-accent)" : "var(--color-line)",
+                  background: realce
                     ? "linear-gradient(160deg, rgba(203,163,92,0.10), rgba(203,163,92,0.02))"
                     : "var(--color-card)",
                 }}
               >
-                {destaque && (
+                {(atual || destaque) && (
                   <span className="absolute -top-2.5 left-4 rounded-[2px] bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-accent-ink">
-                    Mais escolhido
+                    {atual ? "Seu plano atual" : "Mais escolhido"}
                   </span>
                 )}
                 <p className="text-[15px] font-medium text-ink">{plano.nome}</p>
@@ -78,6 +86,16 @@ export default async function PaginaPlanos({ searchParams }: PageProps<"/painel/
                     {plano.frequenciaSemanal}x/semana{plano.incluiNutricao && " · com nutrição"}
                   </p>
                 )}
+                {/* Quantas sessoes o plano da, DERIVADO do campo do plano —
+                    nao texto livre. Sem isso a pessoa escolhe entre precos
+                    sem saber o que muda, que e o que diferencia os planos. */}
+                {plano.limiteAgendamentos != null && (
+                  <p className="mt-1 text-[12px] text-ink-soft">
+                    {plano.limiteAgendamentos >= 999
+                      ? "Sessões 1-on-1 ilimitadas"
+                      : `${plano.limiteAgendamentos} ${plano.limiteAgendamentos === 1 ? "sessão" : "sessões"} 1-on-1 por mês`}
+                  </p>
+                )}
                 {plano.beneficios.length > 0 && (
                   <ul className="mt-4 flex flex-col gap-1.5 text-[12px] leading-[1.6] text-ink-soft">
                     {plano.beneficios.map((beneficio) => (
@@ -85,19 +103,17 @@ export default async function PaginaPlanos({ searchParams }: PageProps<"/painel/
                     ))}
                   </ul>
                 )}
-                <form action={acao.bind(null, plano.id)} className="mt-5">
-                  <button
-                    type="submit"
-                    className="w-full rounded-[2px] py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em]"
-                    style={{
-                      background: destaque ? "var(--color-accent)" : "transparent",
-                      color: destaque ? "var(--color-accent-ink)" : "var(--color-ink)",
-                      border: destaque ? "none" : "1px solid var(--color-line)",
-                    }}
-                  >
-                    {trocar ? "Trocar pra esse" : "Assinar"}
-                  </button>
-                </form>
+                {atual ? (
+                  <p className="mt-5 rounded-[2px] border border-accent-border py-2.5 text-center text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+                    Plano atual
+                  </p>
+                ) : (
+                  <BotaoPlano
+                    acao={acao.bind(null, plano.id)}
+                    rotulo={trocar ? "Trocar pra esse" : "Assinar"}
+                    destaque={destaque}
+                  />
+                )}
               </div>
             );
           })}
@@ -126,6 +142,19 @@ export default async function PaginaPlanos({ searchParams }: PageProps<"/painel/
         Status: {ROTULO_STATUS[assinaturaAtual.status] ?? assinaturaAtual.status}
         {assinaturaAtual.cortesia && " · Cortesia"}
       </p>
+
+      {/* Confirmacao da troca. Antes a tela voltava identica ao catalogo, sem
+          sinal nenhum de que a troca tinha funcionado — e o clique repetido
+          que isso provocava era o que derrubava a pagina. */}
+      {trocado && (
+        <p
+          role="status"
+          className="mt-4 rounded-[3px] border border-accent-border bg-accent-wash px-4 py-3 text-[13px] leading-relaxed text-ink"
+        >
+          Plano alterado para <strong className="text-accent">{trocado}</strong>. Seu acesso
+          continua liberado normalmente.
+        </p>
+      )}
 
       {precisaPagar && (
         <div className="mt-6 flex flex-col gap-2">

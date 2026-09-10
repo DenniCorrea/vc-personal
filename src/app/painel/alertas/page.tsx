@@ -22,6 +22,7 @@ const SEVERIDADE: Record<TipoAlerta, { rotulo: string; cor: "urgente" | "accent"
   HABITO_SONO: { rotulo: "Hábitos", cor: "muted" },
   AGENDA: { rotulo: "Agenda", cor: "muted" },
   SOLICITACAO_EXCLUSAO: { rotulo: "LGPD", cor: "urgente" },
+  MODERACAO: { rotulo: "Comunidade", cor: "urgente" },
 };
 
 const CORES = {

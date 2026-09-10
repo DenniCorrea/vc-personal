@@ -195,6 +195,55 @@ padrão:
   pessoa precisa ler, retornar estado pelo `useActionState` em vez de
   `throw`.
 
+## Bloqueio de acesso — dizer POR QUE, não só que não pode
+
+Tela que barra alguém tem que dizer **qual** dos casos é. Até 10/09/2026
+todas diziam a mesma coisa — "Você ainda não tem acesso. Assine um plano" —
+inclusive para quem já era cliente e cujo plano tinha vencido: a pessoa lia
+como se nunca tivesse sido cliente, sem saber que venceu, quando venceu, nem
+que bastava renovar.
+
+- Usar `situacaoDeAcesso()` / `motivoDoBloqueio()` (`src/lib/acesso.ts`) e o
+  componente `<SemAcesso>`. **Nunca** escrever a mensagem de bloqueio na
+  própria tela: são três casos (nunca assinou / pagamento pendente /
+  vencido) e cada um pede texto e botão diferentes.
+- Consulta que busca a assinatura **só com `status: "ATIVA"`** devolve
+  `null` para quem está atrasado — indistinguível de quem nunca assinou. Por
+  isso `situacaoDeAcesso` busca os três status e é o `status` que decide a
+  mensagem.
+- Cartão de plano no painel: `status` é situação de **pagamento**. Vencido,
+  não anunciar sessão disponível nem "renova em <data>" — a data já passou, e
+  a próxima tela vai barrar a pessoa que clicar.
+
+## Trocar de plano não pode derrubar acesso pago
+
+`trocarPlano` **altera o `planoId` da assinatura que já existe**. Não cancela
+e não cria linha nova.
+
+A versão antiga cancelava a atual e criava uma `PENDENTE`; como toda área
+exige `ATIVA`, trocar de plano tirava na hora o acesso que a pessoa tinha
+pago, sem aviso. Também acumulava uma linha `CANCELADA` por clique.
+
+- `status` é preservado na troca: ele significa situação de pagamento, e o
+  plano escolhido não muda isso.
+- O plano que a pessoa já tem **não** ganha botão de trocar — clicar nele
+  chamava `throw new Error("Você já está nesse plano")`, que em produção vira
+  a tela genérica de erro do Next.
+- Toda ação de troca/assinatura devolve estado por `useActionState`, nunca
+  `throw` (regra já registrada acima, aqui é o caso concreto).
+
+## Client component nunca importa módulo que toca o banco
+
+`src/lib/moderacao.ts` é puro de propósito; o acesso ao banco mora em
+`moderacao-servidor.ts`, com `import "server-only"` no topo.
+
+Um client component importando um arquivo que faz `import { prisma }`
+arrasta o cliente do banco para o bundle do navegador, e o Turbopack derruba
+o build inteiro com `the chunking context does not support external modules
+(request: node:module)` — mensagem que não diz qual import causou. Quando
+esse erro aparecer, procurar o `"use client"` que importa algo com Prisma
+dentro.
+
 ## Navegação — toda tela interna precisa de volta
 
 Tela que só se alcança **entrando** a partir de outra (formulário de

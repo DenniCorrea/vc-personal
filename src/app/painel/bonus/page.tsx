@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { motivoDoBloqueio } from "@/lib/acesso";
+import { SemAcesso } from "@/components/SemAcesso";
 import { VimeoPlayer } from "@/components/VimeoPlayer";
 import { ContadorExpiracao, corDaUrgencia } from "@/components/ContadorExpiracao";
 
@@ -16,23 +18,35 @@ export default async function PaginaBonus() {
     include: { plano: { select: { nome: true, incluiBonus: true } } },
   });
 
-  if (!assinatura?.plano.incluiBonus) {
+  // Dois bloqueios diferentes, e a diferenca importa: quem NAO tem
+  // assinatura vigente precisa saber por que (nunca assinou / pagamento
+  // pendente / venceu); quem tem, mas num plano sem bonus, precisa e de um
+  // convite pra upgrade. Misturar os dois era o que fazia o vencido ler
+  // "assine um plano" como se nunca tivesse sido cliente.
+  if (!assinatura) {
+    return (
+      <SemAcesso
+        situacao={await motivoDoBloqueio(session.user.id)}
+        area="Bônus"
+        oQueDesbloqueia="as masterclasses"
+      />
+    );
+  }
+
+  if (!assinatura.plano.incluiBonus) {
     return (
       <main className="max-w-lg pb-10">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Bônus</p>
-        <h1 className="font-display mt-1 text-[28px] text-ink">
-          {assinatura ? "Seu plano não inclui os bônus" : "Você ainda não tem acesso"}
-        </h1>
+        <h1 className="font-display mt-1 text-[28px] text-ink">Seu plano não inclui os bônus</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
-          {assinatura
-            ? `O plano ${assinatura.plano.nome} não dá acesso às masterclasses. Fazer upgrade libera todas, inclusive as que já estão no ar.`
-            : "Assine um plano de mentoria pra desbloquear as masterclasses."}
+          O plano {assinatura.plano.nome} não dá acesso às masterclasses. Fazer upgrade libera
+          todas, inclusive as que já estão no ar.
         </p>
         <Link
           href="/painel/planos"
           className="mt-4 inline-block rounded-[2px] bg-accent px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent-ink hover:bg-accent-hover"
         >
-          {assinatura ? "Fazer upgrade" : "Ver planos"}
+          Fazer upgrade
         </Link>
       </main>
     );

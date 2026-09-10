@@ -120,6 +120,7 @@ enum TipoAlerta {
   HABITO_SONO
   AGENDA // sessao chegando
   SOLICITACAO_EXCLUSAO // pro ADMIN: pessoa pediu exclusao da conta (LGPD)
+  MODERACAO // pro proprio usuario: sua participacao na comunidade mudou
 }
 
 // Secao "objetivo principal" da anamnese (handoff Metodo Lider, tela 3a).
@@ -214,6 +215,18 @@ model Usuario {
   posts          Post[]
   comentarios    Comentario[]
   curtidas       Curtida[]
+
+  // --- Moderacao da comunidade (10/09/2026) ---
+  // Suspensao TEMPORARIA de postar/comentar. Separado de `ativo` de
+  // proposito: desativar a conta corta o acesso ao produto inteiro (aulas,
+  // sessoes, material) que a pessoa pagou. Quebrar a regra da comunidade
+  // nao justifica tirar o que ela comprou — justifica tirar a voz no feed.
+  // `null` = sem restricao. Data no futuro = silenciado ate la.
+  comunidadeSilenciadaAte DateTime?
+  comunidadeMotivoSilencio String?
+
+  denunciasFeitas    Denuncia[] @relation("Denunciante")
+  denunciasResolvidas Denuncia[] @relation("ModeradorDenuncia")
 
   @@map("usuarios")
 }
@@ -1048,6 +1061,7 @@ model Post {
 
   comentarios Comentario[]
   curtidas    Curtida[]
+  denuncias   Denuncia[]
 
   @@map("posts")
 }
@@ -1070,7 +1084,15 @@ model Comentario {
 
   texto String
 
+  // Mesma regra do Post: moderar NUNCA apaga. Ocultar tira do feed e mantem
+  // o registro — se a remocao for contestada, da pra reler o que foi dito.
+  // Ate 10/09/2026 comentario nao tinha moderacao nenhuma: o Victor podia
+  // ocultar um post inteiro, mas nao um comentario ofensivo dentro dele.
+  oculto Boolean @default(false)
+
   criadoEm DateTime @default(now())
+
+  denuncias Denuncia[]
 
   @@map("comentarios")
 }
@@ -1125,4 +1147,51 @@ model Diagnostico {
   atualizadoEm DateTime @updatedAt
 
   @@map("diagnosticos")
+}
+
+// Denuncia feita por um mentorado sobre um post ou comentario.
+//
+// Sem isso, "ter um moderador olhando" significaria o Victor ler cada post e
+// cada comentario todo dia pra descobrir se algo saiu da linha — o que na
+// pratica quer dizer que ninguem esta olhando. Quem esta no feed ve primeiro;
+// a denuncia e o que transforma isso em fila de trabalho pra ele.
+model Denuncia {
+  id String @id @default(uuid())
+
+  // Um dos dois, nunca os dois: a denuncia e de um post OU de um comentario.
+  post         Post?       @relation(fields: [postId], references: [id])
+  postId       String?
+  comentario   Comentario? @relation(fields: [comentarioId], references: [id])
+  comentarioId String?
+
+  denunciante   Usuario @relation("Denunciante", fields: [denuncianteId], references: [id])
+  denuncianteId String
+
+  motivo  MotivoDenuncia
+  detalhe String?
+
+  criadoEm DateTime @default(now())
+
+  // Resolvida = o Victor ja olhou e decidiu (ocultando ou nao). Guardar quem
+  // resolveu e quando torna a moderacao auditavel, em vez de sumir da fila
+  // sem deixar rastro.
+  resolvidoEm    DateTime?
+  moderador      Usuario?  @relation("ModeradorDenuncia", fields: [moderadorId], references: [id])
+  moderadorId    String?
+  acaoTomada     String?
+
+  // Uma denuncia por pessoa por conteudo — se alguem clicar duas vezes, nao
+  // vira duas linhas na fila. Varias pessoas denunciando o mesmo conteudo
+  // continuam contando separado, que e o sinal que importa.
+  @@unique([denuncianteId, postId, comentarioId])
+  @@index([resolvidoEm])
+  @@map("denuncias")
+}
+
+enum MotivoDenuncia {
+  SPAM
+  OFENSA
+  CONTEUDO_IMPROPRIO
+  FORA_DO_TEMA
+  OUTRO
 }

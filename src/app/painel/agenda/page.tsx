@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
+import { motivoDoBloqueio } from "@/lib/acesso";
+import { SemAcesso } from "@/components/SemAcesso";
 import { formatador } from "@/lib/data";
 import { inicioDoCicloAtual } from "@/lib/mentoria";
 
@@ -23,13 +25,11 @@ export default async function PaginaAgenda() {
 
   if (!assinatura) {
     return (
-      <main className="max-w-md pb-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Minhas sessões</p>
-        <h1 className="font-display mt-1 text-[28px] text-ink">Você ainda não tem assinatura ativa</h1>
-        <Link href="/painel/planos" className="mt-4 inline-block text-[13px] font-medium text-accent">
-          Ver planos
-        </Link>
-      </main>
+      <SemAcesso
+        situacao={await motivoDoBloqueio(session.user.id)}
+        area="Minhas sessões"
+        oQueDesbloqueia="suas sessões 1-on-1"
+      />
     );
   }
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { exigirPapel } from "@/lib/auth-guard";
 import { trilhaDoUsuario } from "@/lib/trilha";
+import { situacaoDeAcesso } from "@/lib/acesso";
+import { SemAcesso } from "@/components/SemAcesso";
 
 const ROTULO_PILAR: Record<string, string> = {
   POSICIONAMENTO: "Posicionamento",
@@ -18,16 +20,10 @@ export default async function PaginaModulos() {
   const { semPlano, modulos } = await trilhaDoUsuario(session.user.id);
 
   if (semPlano) {
-    return (
-      <main className="max-w-md pb-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Módulos</p>
-        <h1 className="font-display mt-1 text-[28px] text-ink">Você ainda não tem acesso</h1>
-        <p className="mt-2 text-[14px] text-ink-soft">Assine um plano de mentoria pra desbloquear a trilha.</p>
-        <Link href="/painel/planos" className="mt-4 inline-block text-[13px] font-medium text-accent">
-          Ver planos
-        </Link>
-      </main>
-    );
+    const situacao = await situacaoDeAcesso(session.user.id);
+    if (!situacao.liberado) {
+      return <SemAcesso situacao={situacao} area="Módulos" oQueDesbloqueia="a trilha" />;
+    }
   }
 
   const totalAulas = modulos.reduce((s, m) => s + m.aulas.length, 0);

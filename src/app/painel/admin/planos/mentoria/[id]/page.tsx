@@ -57,6 +57,27 @@ export default async function PaginaPlanoMentoria({
           />
         </label>
 
+        {/* Sem esse campo o plano nasce com limite `null` e a linha
+            "X de Y usadas" some da agenda do mentorado — o plano entrega
+            sessao mas nao conta. Obrigatorio de proposito. */}
+        <label className="flex flex-col gap-1 text-sm font-medium text-ink">
+          Sessões 1-on-1 por mês
+          <input
+            name="limiteAgendamentos"
+            type="number"
+            step="1"
+            min="0"
+            max="999"
+            defaultValue={plano?.limiteAgendamentos ?? undefined}
+            required
+            className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-base font-normal text-ink outline-none focus:border-accent"
+          />
+          <span className="text-xs font-normal text-ink-soft">
+            Quantas sessões o plano dá por ciclo. Use <strong>999</strong> para ilimitado — o
+            mentorado vê “∞”. Acima do limite, ele paga a sessão avulsa.
+          </span>
+        </label>
+
         <label className="flex flex-col gap-1 text-sm font-medium text-ink">
           Preço mensal (R$)
           <input

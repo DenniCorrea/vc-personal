@@ -2,7 +2,16 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
 import { formatador } from "@/lib/data";
-import { alternarDestaquePost, alternarOcultarPost, comentar } from "@/app/painel/comunidade/actions";
+import {
+  alternarDestaquePost,
+  alternarOcultarPost,
+  alternarOcultarComentario,
+  comentar,
+  resolverDenuncia,
+  liberarMentorado,
+} from "@/app/painel/comunidade/actions";
+import { ROTULO_MOTIVO, lerSilenciamento } from "@/lib/moderacao";
+import { PainelSilenciar } from "./PainelSilenciar";
 
 const formatoQuando = formatador({ day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
@@ -28,6 +37,32 @@ export default async function PaginaAdminComunidade() {
     },
   });
 
+  const [denunciasAbertas, comentarios, silenciados] = await Promise.all([
+    prisma.denuncia.findMany({
+      where: { resolvidoEm: null },
+      orderBy: { criadoEm: "asc" },
+      include: {
+        denunciante: { select: { nome: true } },
+        post: { select: { id: true, texto: true, oculto: true, autor: { select: { id: true, nome: true } } } },
+        comentario: {
+          select: { id: true, texto: true, oculto: true, autor: { select: { id: true, nome: true } } },
+        },
+      },
+    }),
+    prisma.comentario.findMany({
+      orderBy: { criadoEm: "desc" },
+      take: 60,
+      include: {
+        autor: { select: { id: true, nome: true, role: true } },
+        post: { select: { texto: true } },
+      },
+    }),
+    prisma.usuario.findMany({
+      where: { comunidadeSilenciadaAte: { gt: new Date() } },
+      select: { id: true, nome: true, comunidadeSilenciadaAte: true, comunidadeMotivoSilencio: true },
+    }),
+  ]);
+
   const semRespostaDoMentor = posts.filter(
     (p) => !p.oculto && !p.comentarios.some((c) => c.autor.role === "ADMIN"),
   );
@@ -36,6 +71,108 @@ export default async function PaginaAdminComunidade() {
     <main>
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Mentoria</p>
       <h1 className="font-display mt-1 text-[26px] text-ink lg:text-[34px]">Comunidade</h1>
+
+      {/* Denuncias vem ANTES de tudo: e o unico bloco onde alguem esta
+          esperando uma decisao dele sobre conteudo que ja esta no ar. */}
+      {denunciasAbertas.length > 0 && (
+        <section className="mt-8 rounded-[4px] border p-5" style={{ borderColor: "var(--color-warn)" }}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--color-warn)" }}>
+            Denúncias abertas · {denunciasAbertas.length}
+          </p>
+          <div className="mt-4 flex flex-col gap-4">
+            {denunciasAbertas.map((d) => {
+              const alvo = d.post ?? d.comentario;
+              if (!alvo) return null;
+              const ehPost = d.post != null;
+              const autor = alvo.autor;
+              return (
+                <div key={d.id} className="rounded-[3px] border border-line bg-card p-4">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="text-[13px] text-ink">
+                      <span className="font-medium">{d.denunciante.nome}</span> denunciou{" "}
+                      {ehPost ? "um post" : "um comentário"} de{" "}
+                      <span className="font-medium">{autor.nome}</span>
+                    </p>
+                    <span
+                      className="rounded-[2px] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
+                      style={{ background: "var(--color-warn)", color: "#fff" }}
+                    >
+                      {ROTULO_MOTIVO[d.motivo]}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 whitespace-pre-wrap rounded-[2px] border-l-2 border-line pl-3 text-[13.5px] leading-relaxed text-ink-soft">
+                    {alvo.texto}
+                  </p>
+                  {d.detalhe && (
+                    <p className="mt-1.5 text-[12px] text-ink-faint">Detalhe: {d.detalhe}</p>
+                  )}
+                  {alvo.oculto && <p className="mt-1.5 text-[12px] text-warn">já está oculto do feed</p>}
+
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3">
+                    <form
+                      action={
+                        ehPost
+                          ? alternarOcultarPost.bind(null, alvo.id, !alvo.oculto)
+                          : alternarOcultarComentario.bind(null, alvo.id, !alvo.oculto)
+                      }
+                    >
+                      <button type="submit" className="text-[12px] font-medium text-warn">
+                        {alvo.oculto ? "Voltar ao feed" : "Remover do feed"}
+                      </button>
+                    </form>
+
+                    <form action={resolverDenuncia.bind(null, d.id, "removido")}>
+                      <button type="submit" className="text-[12px] font-medium text-accent">
+                        Marcar como resolvida
+                      </button>
+                    </form>
+
+                    <form action={resolverDenuncia.bind(null, d.id, "sem providencia")}>
+                      <button type="submit" className="text-[12px] text-ink-soft hover:text-ink">
+                        Não fere as regras
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className="mt-2">
+                    <PainelSilenciar usuarioId={autor.id} nome={autor.nome} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {silenciados.length > 0 && (
+        <section className="mt-6 rounded-[4px] border border-line bg-card p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-subtle">
+            Suspensos da comunidade · {silenciados.length}
+          </p>
+          <div className="mt-3 flex flex-col gap-2.5">
+            {silenciados.map((u) => {
+              const estado = lerSilenciamento(u);
+              return (
+                <div key={u.id} className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div>
+                    <p className="text-[13.5px] text-ink">{u.nome}</p>
+                    <p className="text-[12px] text-ink-soft">
+                      até {formatoQuando.format(u.comunidadeSilenciadaAte!)}
+                      {estado.silenciado && estado.motivo && ` · ${estado.motivo}`}
+                    </p>
+                  </div>
+                  <form action={liberarMentorado.bind(null, u.id)}>
+                    <button type="submit" className="text-[12px] font-medium text-accent">
+                      Liberar agora
+                    </button>
+                  </form>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {semRespostaDoMentor.length > 0 && (
         <section
@@ -131,6 +268,65 @@ export default async function PaginaAdminComunidade() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Comentarios: ate 10/09/2026 nao existia NENHUMA forma de moderar
+          um comentario — o Victor podia ocultar o post inteiro, mas nao a
+          frase ofensiva dentro dele. Ocultar o post punia quem escreveu o
+          post, que muitas vezes e a vitima. */}
+      <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-subtle">
+        Comentários recentes
+      </p>
+
+      {comentarios.length === 0 ? (
+        <div className="mt-3 rounded-[4px] border border-line bg-card p-6">
+          <p className="text-[13px] text-ink-soft">Nenhum comentário ainda.</p>
+        </div>
+      ) : (
+        <div className="mt-3 flex flex-col gap-2">
+          {comentarios.map((c) => (
+            <div
+              key={c.id}
+              className="rounded-[3px] border border-line p-3.5"
+              style={{ background: "var(--color-card)", opacity: c.oculto ? 0.55 : 1 }}
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-[13.5px] text-ink">
+                  {c.autor.nome}
+                  {c.autor.role === "ADMIN" && (
+                    <span className="ml-2 rounded-[2px] bg-accent px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-accent-ink">
+                      Você
+                    </span>
+                  )}
+                </p>
+                <p className="text-[12px] text-ink-soft">{formatoQuando.format(c.criadoEm)}</p>
+              </div>
+
+              <p className="mt-1.5 whitespace-pre-wrap text-[13.5px] leading-relaxed text-ink-soft">
+                {c.texto}
+              </p>
+              <p className="mt-1 truncate text-[11.5px] text-ink-faint">
+                em resposta a: {c.post.texto}
+              </p>
+              {c.oculto && <p className="mt-1 text-[11.5px] text-warn">removido do feed</p>}
+
+              {c.autor.role !== "ADMIN" && (
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-2.5">
+                  <form action={alternarOcultarComentario.bind(null, c.id, !c.oculto)}>
+                    <button
+                      type="submit"
+                      className="text-[12px] font-medium"
+                      style={{ color: c.oculto ? "var(--color-accent)" : "var(--color-warn)" }}
+                    >
+                      {c.oculto ? "Voltar ao feed" : "Remover do feed"}
+                    </button>
+                  </form>
+                  <PainelSilenciar usuarioId={c.autor.id} nome={c.autor.nome} />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
