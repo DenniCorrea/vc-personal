@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashSenha } from "@/lib/senha";
+import { estaBloqueado, registrarFalha } from "@/lib/rate-limit";
 
 const redefinirSchema = z
   .object({
@@ -31,9 +32,25 @@ export async function redefinirSenha(
   }
 
   const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
+
+  // O token tem 256 bits de entropia e e guardado so como hash, com prazo e
+  // uso unico — adivinhar e inviavel, e o limite abaixo nao esta aqui por
+  // causa disso. Esta porque esta era a unica acao publica do app sem
+  // limite nenhum, e endpoint publico sem teto e convite pra marteladas:
+  // cada chamada custa uma consulta ao banco, e a conta e nossa.
+  //
+  // A chave e o proprio hash do token, nao o e-mail: aqui nao se sabe de
+  // quem e a conta antes de resolver o token, e quem martela manda token
+  // invalido. Assim, quem esta tentando adivinhar queima a propria cota sem
+  // conseguir trancar a recuperacao de senha de ninguem.
+  if (await estaBloqueado("recuperacaoSenha", tokenHash)) {
+    return { erro: "Muitas tentativas. Aguarde alguns minutos e peça um novo link." };
+  }
+
   const registro = await prisma.tokenRecuperacaoSenha.findUnique({ where: { tokenHash } });
 
   if (!registro || registro.usadoEm || registro.expiraEm < new Date()) {
+    await registrarFalha("recuperacaoSenha", tokenHash);
     return { erro: "Esse link de recuperação é inválido ou já expirou. Peça um novo." };
   }
 

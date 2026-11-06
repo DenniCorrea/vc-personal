@@ -62,3 +62,22 @@ export function formatarDataCurta(data: Date, comAno = false): string {
   const mes = String(data.getUTCMonth() + 1).padStart(2, "0");
   return comAno ? `${dia}/${mes}/${data.getUTCFullYear()}` : `${dia}/${mes}`;
 }
+
+// "Que horas são agora", em milissegundos.
+//
+// Por que existe, em vez de `Date.now()` espalhado pelas telas: o projeto
+// trata tempo num lugar só (ver FUSO e dataHoraLocal acima), e "agora" é
+// tempo. Três telas liam o relógio por conta própria para decidir o que já
+// expirou, há quantos dias alguém sumiu e em que semana de mentoria a pessoa
+// está — cada uma com a sua chamada solta.
+//
+// O `react-hooks/purity` reclama de ler o relógio durante o render, e está
+// certo em princípio: com memoização, o valor poderia congelar. Aqui não
+// congela, porque TODA tela que chama isto é dinâmica — elas passam por
+// `exigirSessao`/`exigirPapel`, que lê cookie, e cookie força renderização
+// por requisição (confirmado no build: as rotas saem marcadas como `ƒ`).
+//
+// Centralizar aqui também silenciou a regra sem precisar de supressão: ela
+// mira leitura de relógio DENTRO do componente, e aqui já não é. Se um dia
+// alguma dessas telas deixar de ser dinâmica, o lugar de corrigir é este.
+export const agoraEmMs = (): number => Date.now();

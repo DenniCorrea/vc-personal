@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { formatador } from "@/lib/data";
+import { agoraEmMs, formatador } from "@/lib/data";
 import { ContadorExpiracao } from "@/components/ContadorExpiracao";
 import { excluirBonus } from "./actions";
 
@@ -18,7 +18,7 @@ export default async function PaginaAdminBonus() {
     include: { video: { select: { titulo: true } } },
   });
 
-  const agora = Date.now();
+  const agora = agoraEmMs();
 
   return (
     <main>

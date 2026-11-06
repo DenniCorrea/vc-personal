@@ -13,6 +13,19 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Argumento prefixado com "_" e assinatura imposta de fora que o corpo
+      // nao usa — o caso tipico aqui e `useActionState`, que sempre chama a
+      // acao com (estadoAnterior, formData) mesmo quando a acao so precisa do
+      // id ja ligado por `.bind`. Apagar o parametro quebraria o tipo; o "_"
+      // e justamente como se declara "existe de proposito, nao uso".
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

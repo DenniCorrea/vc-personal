@@ -10,7 +10,7 @@ import { trilhaDoUsuario } from "@/lib/trilha";
 // plano e prazo vale aqui: material de aula expirada some junto.
 export default async function PaginaMateriais() {
   const session = await exigirPapel("PERSONAL_PARCEIRO");
-  const { semPlano, modulos } = await trilhaDoUsuario(session.user.id);
+  const { semPlano, modulos, expiradas } = await trilhaDoUsuario(session.user.id);
 
   if (semPlano) {
     return (
@@ -38,7 +38,14 @@ export default async function PaginaMateriais() {
 
       {materiais.length === 0 ? (
         <div className="mt-6 rounded-[4px] border border-line bg-card p-6">
-          <p className="text-[13px] text-ink-soft">Nenhum material disponível ainda.</p>
+          {/* Material segue a aula: aula com prazo vencido leva o PDF junto.
+              Mesma distinção da tela de Módulos — "ainda não tem" e "o seu
+              prazo acabou" são coisas diferentes para quem está lendo. */}
+          <p className="text-[13px] leading-relaxed text-ink-soft">
+            {expiradas > 0
+              ? "O prazo de acesso das suas aulas terminou, e o material de apoio vence junto com elas."
+              : "Nenhum material disponível ainda."}
+          </p>
         </div>
       ) : (
         <div className="mt-6 flex max-w-2xl flex-col gap-2">

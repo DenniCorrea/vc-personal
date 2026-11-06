@@ -138,6 +138,23 @@ pessoal sensível:
 - Exportação e exclusão de dados pelo titular
 - Senha em bcrypt, token de recuperação só como hash, com prazo e uso único
 
+**Uma falha encontrada e corrigida.** Antes de preparar este repositório para ficar
+público, auditei os 1.208 objetos do histórico do Git atrás de segredo vazado. Nenhuma
+chave de API apareceu — o `.env` nunca foi commitado. Mas achei outra coisa: o
+`prisma/seed.ts` trazia a senha das contas de exemplo escrita como literal, e **essa
+mesma senha valia nas contas do banco de produção**. Publicar o código seria publicar o
+login de administrador do app no ar.
+
+O que foi feito, nesta ordem: rotacionar as senhas de produção (uma distinta por conta)
+e invalidar os tokens de recuperação pendentes; depois tirar a senha do código, que
+agora vem de variável de ambiente — e o seed **se recusa a rodar** sem ela, porque um
+valor padrão silencioso é exatamente como senha fraca sobrevive até a produção.
+
+A senha antiga continua visível em dois commits antigos, e isso é deliberado: ela já não
+abre nada, e reescrever o histórico apagaria justamente o registro de como o problema
+foi encontrado e resolvido. Rotacionar é o que resolve; limpar histórico é higiene — na
+ordem inversa, o segredo fica exposto enquanto se reescrevem os commits.
+
 ---
 
 ## O que vem depois

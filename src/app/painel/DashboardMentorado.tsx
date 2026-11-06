@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { inicioDoCicloAtual } from "@/lib/mentoria";
-import { formatador } from "@/lib/data";
+import { agoraEmMs, formatador } from "@/lib/data";
 
 const formatoMoeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const formatoData = formatador({ day: "2-digit", month: "short" });
@@ -47,7 +47,7 @@ export async function DashboardMentorado({ usuarioId, nome }: { usuarioId: strin
   const disponiveis = limite != null ? Math.max(0, limite - sessoesUsadas) : null;
 
   const semana = semanaZero
-    ? Math.max(1, Math.ceil((Date.now() - semanaZero.criadoEm.getTime()) / (7 * 86_400_000)))
+    ? Math.max(1, Math.ceil((agoraEmMs() - semanaZero.criadoEm.getTime()) / (7 * 86_400_000)))
     : 1;
 
   return (

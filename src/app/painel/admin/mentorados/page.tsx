@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirPapel } from "@/lib/auth-guard";
-import { formatador } from "@/lib/data";
+import { agoraEmMs, formatador } from "@/lib/data";
 
 const formatoMoeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const formatoData = formatador({ day: "2-digit", month: "2-digit", year: "numeric" });
@@ -31,7 +31,7 @@ export default async function PaginaMentorados() {
   });
 
   const totalAulas = await prisma.aula.count({ where: { status: "PUBLICADA" } });
-  const agora = Date.now();
+  const agora = agoraEmMs();
 
   return (
     <main>

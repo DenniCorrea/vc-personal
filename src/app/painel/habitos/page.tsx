@@ -4,8 +4,23 @@ import { exigirPapel } from "@/lib/auth-guard";
 import { hojeData } from "@/lib/data";
 import { definirMeta, incrementarHabito, definirValorHabito } from "./actions";
 
+// Água e sono são recurso da área do ALUNO (academia). Na Fase 9 o
+// mentorado também entrava aqui — os dois produtos estavam ativos e a tela
+// ficava no menu dos dois.
+//
+// A pivotagem de 28/08/2026 tirou esta tela do menu do mentorado, mas o
+// guard continuou aceitando `PERSONAL_PARCEIRO`: a tela sumiu da navegação
+// e seguiu alcançável digitando a URL, entregando a um cliente B2B um
+// controle de litros de água que o produto dele não oferece.
+//
+// Com `exigirPapel("ALUNO")` sozinho, ela passa a respeitar `ALUNO_PAUSADO`
+// como as outras quatro telas da área pausada (treinos, evolução, nutrição,
+// anamnese) — e volta junto com elas quando o B2C for retomado.
+//
+// A "mentalidade do dia", que era a parte desta tela que fazia sentido para
+// o mentorado, ele continua vendo: ela está no painel inicial dele.
 export default async function PaginaHabitos() {
-  const session = await exigirPapel("ALUNO", "PERSONAL_PARCEIRO");
+  const session = await exigirPapel("ALUNO");
 
   const seteDiasAtras = new Date(hojeData());
   seteDiasAtras.setUTCDate(seteDiasAtras.getUTCDate() - 6);

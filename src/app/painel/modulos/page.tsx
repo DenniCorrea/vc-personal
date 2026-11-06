@@ -17,7 +17,7 @@ const ROTULO_PILAR: Record<string, string> = {
 // contextual que muda conforme o andamento (Comecar / Continuar / Rever).
 export default async function PaginaModulos() {
   const session = await exigirPapel("PERSONAL_PARCEIRO");
-  const { semPlano, modulos } = await trilhaDoUsuario(session.user.id);
+  const { semPlano, modulos, expiradas } = await trilhaDoUsuario(session.user.id);
 
   if (semPlano) {
     const situacao = await situacaoDeAcesso(session.user.id);
@@ -46,10 +46,32 @@ export default async function PaginaModulos() {
 
       {modulos.length === 0 ? (
         <div className="mt-6 rounded-[4px] border border-line bg-card p-6">
-          <p className="text-[13px] text-ink-soft">
-            Nenhuma aula publicada ainda. Assim que o Victor liberar o primeiro módulo, ele
-            aparece aqui.
-          </p>
+          {/* Dois estados vazios diferentes, de propósito. Dizer "nenhuma
+              aula publicada ainda" para quem VIU as aulas e perdeu o prazo
+              acusa o Victor de não ter entregue o que entregou — e some com
+              a única informação que a pessoa precisa, que é o prazo. */}
+          {expiradas > 0 ? (
+            <>
+              <p className="text-[14px] text-ink">
+                {expiradas === 1
+                  ? "O prazo de acesso da sua aula terminou."
+                  : `O prazo de acesso das suas ${expiradas} aulas terminou.`}
+              </p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+                As aulas da mentoria ficam disponíveis por um período, contado da
+                publicação. Seu progresso continua salvo. Fale com o Victor se precisar
+                rever alguma.
+              </p>
+              <Link href="/painel/mensagens" className="mt-3 inline-block text-[13px] font-medium text-accent">
+                Falar com o Victor
+              </Link>
+            </>
+          ) : (
+            <p className="text-[13px] text-ink-soft">
+              Nenhuma aula publicada ainda. Assim que o Victor liberar o primeiro módulo, ele
+              aparece aqui.
+            </p>
+          )}
         </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

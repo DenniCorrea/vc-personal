@@ -86,32 +86,85 @@ export function PlayerAula({
       });
 
     // 2. Progresso e 3. conclusao automatica
-    let ultimoEnvio = Date.now();
-    const aoTocar = ({ seconds, duration }: { seconds: number; duration: number }) => {
+    //
+    // Os dois sao movidos por um RELOGIO NOSSO que PERGUNTA o tempo ao
+    // player, e nao pelo evento `timeupdate` do Vimeo.
+    //
+    // Medido em 06/11/2026: durante 72s de reproducao continua o iframe
+    // emitiu 275 eventos de progresso e NENHUM chegou ao nosso handler,
+    // enquanto `pause` chegou normalmente na mesma sessao. Ou seja, o SDK
+    // estava conectado e so o evento continuo se perdia. O efeito pratico
+    // era grave e silencioso: a posicao so era salva quando a pessoa
+    // pausava, e a conclusao automatica aos 95% nunca acontecia — quem
+    // assistisse a aula inteira e fechasse a aba continuava com a aula
+    // marcada como nao concluida.
+    //
+    // Evento continuo e a parte fragil da API (o navegador estrangula esse
+    // tipo de evento quando a aba nao esta sendo desenhada); pergunta
+    // direta sempre responde. E a mesma troca ja feita na captura do minuto
+    // da duvida, pelo mesmo motivo.
+    let relogio: ReturnType<typeof setInterval> | null = null;
+
+    const gravarAgora = async (concluirSePassou: boolean) => {
       if (!vivo) return;
+      try {
+        const [segundos, duracao] = await Promise.all([
+          player.getCurrentTime(),
+          player.getDuration(),
+        ]);
+        if (!vivo || !Number.isFinite(segundos)) return;
 
-      if (!concluiuRef.current && duration > 0 && seconds >= duration * PERCENTUAL_CONCLUSAO) {
-        concluiuRef.current = true;
-        void marcarConcluida(aulaId, true).catch(() => {});
-        return;
-      }
+        ultimoSalvoRef.current = Math.floor(segundos);
+        void salvarPosicao(aulaId, Math.floor(segundos)).catch(() => {});
 
-      if (Date.now() - ultimoEnvio >= INTERVALO_SALVAR_MS) {
-        ultimoEnvio = Date.now();
-        ultimoSalvoRef.current = Math.floor(seconds);
-        void salvarPosicao(aulaId, Math.floor(seconds)).catch(() => {});
+        if (
+          concluirSePassou &&
+          !concluiuRef.current &&
+          duracao > 0 &&
+          segundos >= duracao * PERCENTUAL_CONCLUSAO
+        ) {
+          concluiuRef.current = true;
+          void marcarConcluida(aulaId, true).catch(() => {});
+        }
+      } catch {
+        // Player sumiu ou nao respondeu: a proxima batida tenta de novo.
       }
     };
 
-    const aoParar = ({ seconds }: { seconds: number }) => {
-      if (!vivo) return;
-      ultimoSalvoRef.current = Math.floor(seconds);
-      void salvarPosicao(aulaId, Math.floor(seconds)).catch(() => {});
+    const ligarRelogio = () => {
+      if (relogio) return;
+      relogio = setInterval(() => void gravarAgora(true), INTERVALO_SALVAR_MS);
+    };
+    const desligarRelogio = () => {
+      if (relogio) clearInterval(relogio);
+      relogio = null;
     };
 
-    player.on("timeupdate", aoTocar);
+    const aoDarPlay = () => {
+      if (vivo) ligarRelogio();
+    };
+
+    // Parou: desliga o relogio e grava uma ultima vez. O `ended` tambem
+    // passa por aqui com `concluir = true`, que e o caso de quem assistiu
+    // ate o fim sem nunca pausar.
+    const aoParar = () => {
+      if (!vivo) return;
+      desligarRelogio();
+      void gravarAgora(true);
+    };
+
+    player.on("play", aoDarPlay);
     player.on("pause", aoParar);
     player.on("ended", aoParar);
+
+    // Se a aula ja estiver tocando quando o efeito monta (remontagem do
+    // React no meio do video), o `play` ja passou e nao vai disparar de novo.
+    void player
+      .getPaused()
+      .then((pausado) => {
+        if (vivo && !pausado) ligarRelogio();
+      })
+      .catch(() => {});
 
     // Fechar a aba conta como sair. Nao da pra esperar resposta aqui, entao
     // manda o ultimo tempo que ja esta em memoria.
@@ -122,16 +175,21 @@ export function PlayerAula({
 
     return () => {
       vivo = false;
+      desligarRelogio();
       desconectarPlayer(aulaId);
       window.removeEventListener("pagehide", aoSair);
       // `off` e nao `destroy()`: o iframe pertence ao React. Destruir aqui
       // arrancaria da arvore um elemento que o React ainda gerencia — que e
       // justamente a disputa que causou o defeito original.
-      player.off("timeupdate", aoTocar);
+      player.off("play", aoDarPlay);
       player.off("pause", aoParar);
       player.off("ended", aoParar);
     };
-  }, [aulaId, posicaoInicial]);
+    // `posicaoInicial` NAO entra aqui de proposito: ela e o valor INICIAL, e
+    // so e lida uma vez na retomada. Como ela muda a cada posicao salva,
+    // inclui-la remontaria o player no meio do video a cada gravacao.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aulaId]);
 
   return (
     <div>

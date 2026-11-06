@@ -33,7 +33,7 @@ export async function trilhaDoUsuario(usuarioId: string) {
     where: { usuarioId, status: "ATIVA" },
     select: { planoId: true },
   });
-  if (!assinatura) return { semPlano: true as const, modulos: [] };
+  if (!assinatura) return { semPlano: true as const, modulos: [], expiradas: 0 };
 
   const modulos = await prisma.modulo.findMany({
     where: {
@@ -54,6 +54,13 @@ export async function trilhaDoUsuario(usuarioId: string) {
   });
 
   const agora = Date.now();
+
+  // Conta quantas aulas o prazo tirou da biblioteca. Sem esse numero, a tela
+  // de modulos nao tem como distinguir "o Victor ainda nao publicou nada" de
+  // "publicou, voce via, e o seu prazo acabou" — e dizia a primeira frase nos
+  // dois casos, acusando o mentor de nao ter entregue o que entregou.
+  let expiradas = 0;
+
   const comAcesso = modulos.map((m) => ({
     ...m,
     aulas: m.aulas
@@ -66,9 +73,15 @@ export async function trilhaDoUsuario(usuarioId: string) {
       // expirar, saem da sua biblioteca").
       .filter((a) => {
         const fim = expiraEm(a);
-        return fim === null || fim.getTime() > agora;
+        const vigente = fim === null || fim.getTime() > agora;
+        if (!vigente) expiradas++;
+        return vigente;
       }),
   }));
 
-  return { semPlano: false as const, modulos: comAcesso.filter((m) => m.aulas.length > 0) };
+  return {
+    semPlano: false as const,
+    modulos: comAcesso.filter((m) => m.aulas.length > 0),
+    expiradas,
+  };
 }
