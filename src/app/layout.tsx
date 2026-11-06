@@ -3,7 +3,7 @@ import { Manrope, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { RegistrarServiceWorker } from "./RegistrarServiceWorker";
 
-// Identidade visual do handoff "Metodo Lider" (design_handoff_metodo_lider/README.md):
+// Identidade visual do handoff "Metodo Lider" (design_handoff_aluno_b2c/README.md):
 // Manrope pra interface, Instrument Serif pra titulos/falas/citacoes.
 const manrope = Manrope({
   variable: "--font-manrope",

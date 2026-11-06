@@ -1,117 +1,96 @@
-# Status do projeto — Victor Carvalho Personal
+# Status operacional — Victor Carvalho Personal
 
-> Atualizado em 24/08/2026. Esse arquivo existe pra qualquer pessoa (ou uma
-> sessão nova do Claude) recuperar o contexto do projeto rapidamente, sem
-> precisar reler todo o histórico de commits ou de conversa.
+> Atualizado em 06/11/2026.
+>
+> **Para que serve este arquivo:** retomar o trabalho sem reler a conversa
+> inteira. É o documento *operacional* — onde as coisas estão, o que está
+> pronto, o que trava o quê.
+>
+> Não confundir com os outros três:
+> - **`README.md`** — o projeto contado de fora: o problema, a pivotagem,
+>   as decisões. É a porta de entrada de quem nunca viu o repositório.
+> - **`CLAUDE.md`** — as regras de código. Lido antes de qualquer alteração.
+> - **`AGENTS.md`** — aviso do Next.js 16, gerado pela própria ferramenta.
+>
+> Quando algo mudar, atualize **um** deles — o que couber. Foi a duplicação
+> entre este arquivo e o README que deixou os dois se contradizendo por dois
+> meses e meio.
 
-## O que é
+## O que está no ar
 
-App do Victor Carvalho Personal, com **dois produtos** que compartilham a
-mesma infraestrutura mas nunca misturam conteúdo/regras:
+| | |
+|---|---|
+| App | victorcarvalhopersonal.onrender.com |
+| Código | github.com/DenniCorrea/vc-personal |
+| Deploy | Render — automático a cada push na `master` |
+| Banco | Neon (PostgreSQL) — **o mesmo em dev e produção** |
 
-- **ALUNO** — serviço de personal training pros clientes finais dele.
-- **MENTORIA** — consultoria que o Victor vende pra OUTROS personal trainers.
+O inventário de contas e links de cada serviço (Neon, Resend, Cloudinary,
+Mercado Pago, AWS) está no `Contas_e_Links_VC_Personal.docx`, **fora do
+repositório**, de propósito — ver "Onde ficam os documentos" no fim.
 
-3 perfis: `ALUNO`, `PERSONAL_PARCEIRO` (rótulo na tela: "Personal Trainer
-Mentorado" — é o cliente B2B da mentoria), `ADMIN` (o Victor).
+## Produto: dois, um ligado
 
-## Stack
+O app atende dois públicos na mesma base de código:
 
-- **Next.js 16** (App Router) + TypeScript, monólito (front + back juntos)
-- **Prisma 7** ORM — atenção: mudou bastante da v6 (driver adapters
-  obrigatórios, `prisma.config.ts`, cliente gerado fora do `node_modules`).
-  Ver `.claude/skills/prisma-*` no repo, são docs oficiais da Prisma pra
-  agentes de IA, mais confiáveis que treinamento defasado.
-- **PostgreSQL na Neon** — durante a fase de teste, dev e produção usam o
-  MESMO banco. Decisão consciente e datada (27/08/2026): sem usuário pagante
-  ainda, separar ambientes custaria tempo que rende mais em funcionalidade.
-  A contrapartida está escrita no `CLAUDE.md` — comandos destrutivos
-  proibidos no projeto — e a separação está marcada para **antes do primeiro
-  cliente pagante entrar**.
-- **Auth.js (NextAuth v5 beta)** — Credentials + sessão JWT, sem adapter de
-  banco (não precisa, não tem login OAuth).
-- **Mercado Pago** — pagamentos (cartão vira assinatura recorrente de
-  verdade via PreApproval; Pix/débito pagam ciclo a ciclo).
-- **Vimeo** — hospedagem de vídeo, link privado (`?h=`) pra controle de acesso.
-- **Resend** — envio de e-mail (recuperação de senha).
-- **Cloudinary** (plano gratuito) — fotos de progresso, avatar e imagens
-  de anatomia dos exercícios.
-- **Render** — hospedagem do app.
+- **Mentoria B2B** — o Victor vende para outros personal trainers.
+  **É o produto em operação.** 19 telas do mentorado, 34 do admin.
+- **Área do aluno (B2C)** — personal training para o cliente final dele.
+  **Pausada desde 28/08/2026**, por decisão de negócio: a mentoria tem
+  ticket maior e foi priorizada.
 
-## Onde tudo está hospedado
+A pausa é **uma linha**: `ALUNO_PAUSADO` em `src/lib/feature-flags.ts`.
+Nada foi apagado. Voltar a ligar é trocar `true` por `false` e testar os
+fluxos — as correções feitas na mentoria foram aplicadas na camada
+compartilhada, então a área do aluno já as herdou.
 
-| Serviço | Link | Pra quê |
+A referência visual dessa área está em `design_handoff_aluno_b2c/`.
+
+## O que trava o quê
+
+| Pendência | Quem resolve | O que destrava |
 |---|---|---|
-| GitHub | github.com/DenniCorrea/vc-personal | Código-fonte |
-| Render | dashboard.render.com | Hospedagem — serviço "victorcarvalhopersonal" |
-| App no ar | victorcarvalhopersonal.onrender.com | O app em produção |
-| Neon | console.neon.tech | Banco de dados |
-| Resend | resend.com | E-mail |
-| Cloudinary | cloudinary.com | Fotos e imagens (plano gratuito) |
-| Mercado Pago | mercadopago.com.br/developers/panel | Pagamentos (credenciais pendentes do Victor) |
+| Credenciais do Mercado Pago | Victor | Checkout real (código pronto e testado em sandbox) |
+| Dados do Victor (nome/CNPJ, contato, prazo de guarda) | Victor | Publicar a política de privacidade no app |
+| Decisão da conta do Vimeo (dele ou do Denni) | Denni + Victor | Upload de vídeo em nome do dono certo |
+| Health check de infra (endpoint + Render Cron) | Denni | Monitoramento — combinado, ainda não feito |
 
-## Fases concluídas (1 a 11)
+Nada aqui bloqueia o resto: o app funciona hoje sem nenhum desses itens.
 
-1. Modelagem de dados
-2. Autenticação e perfis
-3. Planos e assinaturas (depois refatorado pro modelo `Produto`/`Plano`
-   unificado, pra caber os dois produtos sem duplicar tabela)
-4. Agendamento (`Horario` + `Agendamento`, limite semanal, sessão avulsa)
-5. Pagamentos (Mercado Pago — código pronto, aguardando credenciais reais)
-6. Vídeos (Vimeo, acesso por produto)
-7. Área de treino (`Exercicio` reutilizável + `Treino` individual por aluno)
-8. Área de mentoria (conteúdo por pilar, publicação agendada)
-9. Hábitos e mentalidade (água/sono, mensagens agendadas)
-10. Alertas e retenção (renovação, atraso, baixa utilização, lembretes)
-11. Deploy (Render, no ar)
+## Armadilhas que já custaram caro
 
-Mais 5 melhorias aprovadas depois da Fase 10 (log de admin, horário em
-lote, cancelar/trocar plano, exportação/exclusão LGPD) e acesso cortesia
-(VIP/teste sem pagamento). Trocar senha e recuperar senha por e-mail
-(Resend) também prontos.
+Todas estão detalhadas no `CLAUDE.md`, com o porquê. As que mais voltam:
 
-## Fase 12 — Método Líder (concluída, ainda não subida pro Render)
+- **Fuso horário** — o Render roda em UTC, a máquina local não. Fuso é
+  sempre declarado, nunca herdado do processo.
+- **Erro em Server Action** não chega legível em produção; devolver estado
+  por `useActionState` em vez de `throw`.
+- **Banco compartilhado** entre dev e produção: comando destrutivo é
+  proibido no projeto. Reabrir essa decisão **antes do primeiro cliente
+  pagante**.
+- **Build de produção** localmente antes de todo push — o servidor de
+  desenvolvimento esconde erro que só aparece no build.
 
-Redesenho completo seguindo o handoff de design (`design_handoff_metodo_lider/`)
-— tema escuro fixo, Instrument Serif + Manrope — e as novas funcionalidades
-do documento de regras de negócio do Victor:
+## Onde ficam os documentos
 
-- **App do aluno** (bottom nav): dashboard "Hoje", anamnese/onboarding,
-  execução de treino com histórico de carga por série (referência "Antes"),
-  nutrição com check-in por refeição, evolução (progressão de carga, peso,
-  medidas, fotos via Cloudinary), mensagens (chat texto com o admin).
-- **Painel do admin** (sidebar): Visão do dia (triagem — sem treino há 3+
-  dias, check-ins a responder, revisão recomendada, aderência média), ficha
-  do aluno com relatório comparativo entre avaliações e card de alerta de
-  lesão (da anamnese), gestão de plano alimentar por aluno, conversas,
-  mentalidade do dia reestilizada. Todas as telas antigas (planos, vídeos,
-  exercícios, horários, conteúdo da mentoria, logs) continuam funcionando,
-  só herdaram os tokens visuais novos.
-- Schema novo: `Anamnese`, `Avaliacao`, `ExecucaoExercicio`,
-  `PlanoNutricional`/`Refeicao`/`CheckinNutricional`, `FotoProgresso`,
-  `Mensagem`, campos de anatomia no `Exercicio`, `avatarUrl` no `Usuario`.
-- Escopo deixado de fora de propósito: mensagens por áudio (só texto),
-  "Fase Inteligência" (dashboard agregado — adiada até ter uso real
-  acumulado), Health Check de infra (fase separada, ainda não feita).
+Documento de negócio **não entra no repositório**, mesmo sem senha dentro:
+o repositório é público desde 11/2026, e esse material não precisa estar
+lá. Todos ficam em `Documentos/Estudo APP Victor/`:
 
-Testado ponta a ponta no navegador (login → anamnese → ficha pelo admin →
-execução pelo aluno → avaliação comparativa → visão do dia) antes de
-qualquer commit. Dois bugs reais de fuso horário encontrados e corrigidos
-nesse processo (ver `git log`).
+| Arquivo | O que é |
+|---|---|
+| `Contas_e_Links_VC_Personal.docx` | Onde cada serviço está e para que serve (sem senhas) |
+| `Guia_de_Estudos_VC_Personal.docx` | Material de estudo do Denni sobre o que foi construído |
+| `Apresentacao_Metodo_Lider_VC_Personal.pptx` | Apresentação do app para o Victor |
+| `Politica_de_Privacidade_VC_Personal_RASCUNHO.docx` | Rascunho, esperando os dados do Victor |
 
-## Pendente
-
-- Credenciais de teste do Mercado Pago (o Denni pediu pro Victor)
-- Health Check de infra (endpoint + Render Cron Job) — combinado, ainda
-  não feito
-- Guia de estudo / apresentação / material de venda pro Victor / sugestão
-  de precificação — combinado fazer depois que o Mercado Pago também
-  estiver resolvido, mas sem bloquear o resto por causa disso
+As **senhas** não estão em nenhum arquivo: ficam no gerenciador de senhas
+pessoal, e as chaves técnicas só no `.env` local e nas variáveis de
+ambiente do Render.
 
 ## Como retomar
 
-O histórico completo de decisões (o quê e **por quê**) está nas mensagens
-de commit do `git log` — cada uma explica o raciocínio, não só o que
-mudou. Não é preciso reler a conversa inteira: `git log --oneline` já dá
-o mapa das 15+ fases/mudanças, e `git log -p <hash>` mostra o diff de
-qualquer uma.
+1. `README.md` para o contexto, este arquivo para o estado.
+2. `git log --oneline` — cada mensagem explica o **porquê**, não só o que
+   mudou. É a memória real do projeto.
+3. `CLAUDE.md` antes de escrever qualquer código.

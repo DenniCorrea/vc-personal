@@ -679,7 +679,7 @@ model TokenRecuperacaoSenha {
 
 // ---------------------------------------------------------------------------
 // Metodo Lider (Fase 12) — historico de execucao, avaliacoes, nutricao,
-// anamnese, fotos e mensagens. Ver design_handoff_metodo_lider/README.md
+// anamnese, fotos e mensagens. Ver design_handoff_aluno_b2c/README.md
 // pras telas que consomem cada um desses modelos.
 // ---------------------------------------------------------------------------
 

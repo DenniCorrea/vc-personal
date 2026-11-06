@@ -1,3 +1,12 @@
+> **Este handoff documenta a área B2C (aluno/academia), pausada desde
+> 28/08/2026.** O produto em operação hoje é a **Mentoria B2B** — veja o
+> `README.md` na raiz do repositório para o contexto da pivotagem.
+>
+> Nada aqui foi descartado: o código do aluno continua no repositório,
+> desligado por uma única flag (`src/lib/feature-flags.ts`). Esta pasta é a
+> referência visual de quando essa área for retomada, e a origem dos tokens
+> de design (tema escuro, Instrument Serif + Manrope) que a mentoria herdou.
+
 # Handoff: App Método Líder — Victor Carvalho (consultoria de alta performance)
 
 ## Visão geral
@@ -14,6 +23,10 @@ Posicionamento: premium, sério, maduro, humano. **Regra de ouro:** nada de app 
 O arquivo `Metodo Lider App.dc.html` deste pacote é uma **referência de design feita em HTML** — um protótipo que mostra aparência e comportamento pretendidos, **não código de produção para copiar**. A tarefa é **recriar esses designs no ambiente do codebase de destino** (React/Next, Vue, etc.), usando os padrões, bibliotecas e convenções já estabelecidos lá. Se ainda não existe codebase, escolha o stack apropriado e implemente os designs nele.
 
 O HTML usa um runtime próprio de streaming (tags `<x-dc>`, `<helmet>`, estilos inline). **Ignore esse runtime.** Extraia dele: estrutura, hierarquia, medidas, cores, tipografia, copy e comportamentos.
+
+## ⚠ Leia antes: `RESPONSIVE.md`
+
+As telas do aluno são **mobile-first (390×844)** — o aluno usa o app no celular, na academia. As telas do consultor são desktop (1280×800). As molduras de tamanho fixo do protótipo existem só para exibir as telas lado a lado no canvas; **não são o layout final**. Todas as regras de breakpoint, safe area, viewport, alvos de toque, teclado e comportamento por tela estão em **`RESPONSIVE.md`**, que é parte obrigatória deste handoff.
 
 ## Fidelidade
 
@@ -173,6 +186,30 @@ Header com avatar do Victor e "Responde em até 12h". Bolhas: recebida `#1A1714`
 - **Plano alimentar (grid `1fr | 340px`):** tabela `150px | 1fr | 90px | 100px` → Refeição · Composição · Kcal · **Aderência** (accent quando alta, muted quando média, `#C0483B` quando baixa). Lateral: "ADAPTAÇÕES A REVISAR" com a justificativa do aluno citada, data, e CTA "RESPONDER ALUNO"; card "METAS DIÁRIAS" (água, sono, proteína) editável.
 - **Mentalidade do dia:** editor com textarea em Instrument Serif 22px sobre card com gradiente accent, rodapé "Publica hoje às 06h00" e contador "72 / 180 caracteres"; CTA "AGENDAR PUBLICAÇÃO"; lateral "PRÓXIMAS" com a fila de mensagens datadas. A mensagem publicada aparece no card de mentalidade do dashboard do aluno.
 
+### 12. Perfil (mobile)
+
+Header com avatar 64px, nome Instrument Serif 26px, "Aluno desde…" e ação "TROCAR FOTO". Cards, em ordem: **Plano ativo** (destacado com borda accent e gradiente — frequência, valor, forma de pagamento, data de renovação, botões "MUDAR PLANO" e "PAGAMENTOS"); **Meus dados** (e-mail, telefone, altura·peso, atalho "REVISAR" para a anamnese); **Metas diárias** (água, sono — leitura, com a nota "Definidas pelo Victor. Fale com ele para ajustar."); **Notificações** (toggles 40×22px: lembrete de treino, mentalidade do dia 06h, check-in de refeições); e as linhas finais "Termos e privacidade" e "Sair da conta". Todos os cards precisam de `flex-shrink: 0`.
+
+### 13. Agenda (mobile)
+
+Header com "AGOSTO · SEMANA 6", título "Sua agenda" e contador "3 de 4 feitos". Faixa da semana: 7 células, dia atual em accent sólido com texto `#14120F`. Conteúdo: bloco "HOJE" com o treino do dia (card accent + CTA "INICIAR TREINO") e compromissos com ação ("Envio de fotos e medidas" → ENVIAR); bloco "PRÓXIMOS DIAS" com linhas dia+evento (treinos, "Chamada com o Victor 19h30" → ENTRAR) e domingo como "Descanso · Recuperação faz parte do método" em `opacity: 0.6`.
+
+### 14. Vídeos (mobile)
+
+Biblioteca: campo de busca, filtros em chips (Todos / Peito / Costas / Pernas / Mentalidade), seção **"DO SEU TREINO DE HOJE"** com linhas de miniatura 96×62 + nome + duração e grupo (o exercício atual com borda accent), seção **"MENTALIDADE · SÉRIE DO VICTOR"** em card grande (thumb 172px + título serif 20px + "8:20 · episódio 4 de 12") e **"ASSISTIDOS RECENTEMENTE"** em `opacity: 0.7`.
+
+### 15. Alertas (aluno + admin)
+
+**Aluno (mobile):** header com "3 NÃO LIDOS" e ação "MARCAR LIDOS". Feed com severidade indicada por filete lateral de 2px: `#C0483B` para ação urgente ("Treino de hoje ainda não iniciado"), accent para recado do Victor ("Sua ficha foi atualizada" + "VER FICHA"), cinza para informativo (check-in pendente), e itens já resolvidos em `opacity: 0.65` (pagamento confirmado, fotos recebidas).
+
+**Admin (desktop):** filtros "Não resolvidos · 12" / "Todos" e três grupos — **Risco de abandono** (rótulo em `#C0483B`), **Aguardando resposta** (rótulo accent) e **Operacional** (rótulo muted). Tabelas `1.6fr | 1.4fr | 100px | 130px`: aluno+contexto · situação · tempo/aderência · ação específica ("Falar agora", "Responder", "Abrir", "Montar ficha", "Cobrar").
+
+### 16. Acesso rápido ao vídeo — play por exercício + bottom sheet
+
+**Dois pontos de acesso:** (a) na **lista de exercícios do treino**, cada linha tem um botão play circular de 38px à direita (borda accent; o exercício em andamento tem borda accent cheia e legenda "Em andamento · série 2 de 4") — toque no nome abre a ficha, toque no play abre só o vídeo; (b) na **ficha do exercício**, chip "ASSISTIR EXECUÇÃO · 2:14" logo abaixo do subtítulo de séries.
+
+**Player:** bottom sheet sobre a tela atual, `border-radius: 16px 16px 0 0`, alça de 44×4px, backdrop `rgba(8,7,6,0.72)`, entrada em 220ms. Vídeo em 16/9, título, duração·grupo·cadência, ✕ no canto, e ações "SALVAR NOS MEUS VÍDEOS" / "VOLTAR AO TREINO". **A tela de treino permanece montada atrás** — cronômetro e séries registradas não se perdem. Embed do Vimeo em iframe (`dnt=1&title=0&byline=0&portrait=0&badge=0`), sem branding e sem vídeos relacionados; nunca abrir no navegador. Detalhes de gesto, fechamento e variante desktop em `RESPONSIVE.md` §13.
+
 ---
 
 ## Interações e comportamento
@@ -205,6 +242,7 @@ Header com avatar do Victor e "Responde em até 12h". Bolhas: recebida `#1A1714`
 
 ## Arquivos
 
-- `Metodo Lider App.dc.html` — protótipo hifi com as 11 telas, organizado em três seções (Turno 3 no topo, depois Turno 2, depois Turno 1). Ids de referência: `1a` login/parallax, `1b` dashboard do aluno, `2a` área de treino, `2b` nutrição, `2c` planos e checkout, `2d` painel visão do dia, `3a` onboarding, `3b` evolução, `3c` mensagens, `3d` aluno em detalhe/ficha, `3e` plano alimentar/mentalidade.
+- `Metodo Lider App.dc.html` — protótipo hifi com as 11 telas, organizado em três seções (Turno 3 no topo, depois Turno 2, depois Turno 1). Ids de referência: `4a` perfil, `4b` agenda, `4c` vídeos, `4d` alertas (aluno + admin), `4e` acesso rápido ao vídeo, `1a` login/parallax, `1b` dashboard do aluno, `2a` área de treino, `2b` nutrição, `2c` planos e checkout, `2d` painel visão do dia, `3a` onboarding, `3b` evolução, `3c` mensagens, `3d` aluno em detalhe/ficha, `3e` plano alimentar/mentalidade.
 - `uploads/victor/` — fotos originais do Victor.
-- `screenshots/` — captura de cada tela, nomeada pelo id: `1a-login-parallax`, `1b-dashboard-aluno`, `2a-area-de-treino`, `2b-nutricao-checkin`, `2c-planos-checkout`, `2d-admin-visao-do-dia`, `3a-onboarding-anamnese`, `3b-evolucao`, `3c-mensagens`, `3d-admin-aluno-ficha`, `3e-admin-nutricao-mentalidade`. Telas com rolagem interna aparecem no estado inicial — o HTML é a fonte para o conteúdo completo.
+- `RESPONSIVE.md` — **obrigatório**: viewports, breakpoints, safe areas, alvos de toque, comportamento de teclado e regras responsivas tela por tela.
+- `screenshots/` — captura de cada tela, nomeada pelo id: `1a-login-parallax`, `1b-dashboard-aluno`, `2a-area-de-treino`, `2b-nutricao-checkin`, `2c-planos-checkout`, `2d-admin-visao-do-dia`, `3a-onboarding-anamnese`, `3b-evolucao`, `3c-mensagens`, `3d-admin-aluno-ficha`, `3e-admin-nutricao-mentalidade`, `4a-perfil`, `4b-agenda`, `4c-videos`, `4d-alertas`, `4e-video-bottom-sheet`. Telas com rolagem interna aparecem no estado inicial — o HTML é a fonte para o conteúdo completo.
