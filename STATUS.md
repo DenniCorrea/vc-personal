@@ -74,8 +74,8 @@ Todas estão detalhadas no `CLAUDE.md`, com o porquê. As que mais voltam:
 ## Onde ficam os documentos
 
 Documento de negócio **não entra no repositório**, mesmo sem senha dentro:
-o repositório é público desde 11/2026, e esse material não precisa estar
-lá. Todos ficam em `Documentos/Estudo APP Victor/`:
+o repositório está preparado para virar público, e esse material não precisa
+estar lá. Todos ficam em `Documentos/Estudo APP Victor/`:
 
 | Arquivo | O que é |
 |---|---|
