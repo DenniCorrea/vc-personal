@@ -20,10 +20,14 @@ Mentorado" — é o cliente B2B da mentoria), `ADMIN` (o Victor).
 - **Next.js 16** (App Router) + TypeScript, monólito (front + back juntos)
 - **Prisma 7** ORM — atenção: mudou bastante da v6 (driver adapters
   obrigatórios, `prisma.config.ts`, cliente gerado fora do `node_modules`).
-  Ver `.agents/skills/prisma-*` no repo, são docs oficiais da Prisma pra
+  Ver `.claude/skills/prisma-*` no repo, são docs oficiais da Prisma pra
   agentes de IA, mais confiáveis que treinamento defasado.
-- **PostgreSQL na Neon** — é o MESMO banco em dev e produção (decisão do
-  Denni: "não trabalhamos com normas", sem necessidade de separar ainda).
+- **PostgreSQL na Neon** — durante a fase de teste, dev e produção usam o
+  MESMO banco. Decisão consciente e datada (27/08/2026): sem usuário pagante
+  ainda, separar ambientes custaria tempo que rende mais em funcionalidade.
+  A contrapartida está escrita no `CLAUDE.md` — comandos destrutivos
+  proibidos no projeto — e a separação está marcada para **antes do primeiro
+  cliente pagante entrar**.
 - **Auth.js (NextAuth v5 beta)** — Credentials + sessão JWT, sem adapter de
   banco (não precisa, não tem login OAuth).
 - **Mercado Pago** — pagamentos (cartão vira assinatura recorrente de

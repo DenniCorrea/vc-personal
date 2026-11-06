@@ -18,8 +18,29 @@ function hashCpf(cpf: string): string {
   return createHash("sha256").update(cpf).digest("hex");
 }
 
+// A senha das contas de exemplo vem do ambiente, NUNCA do codigo.
+//
+// Antes estava escrita aqui como literal. Enquanto o repositorio era
+// privado isso passava, mas a mesma senha valia nas contas do banco de
+// producao — ou seja, publicar o codigo seria publicar o login de ADMIN do
+// app no ar. Senha em arquivo versionado nao tem como ser trocada sem
+// reescrever historico: por isso ela sai do codigo, nao so muda de valor.
+//
+// Sem a variavel definida, o seed PARA em vez de cair num padrao fraco:
+// um valor padrao silencioso e exatamente como senha fraca sobrevive.
+function senhaDoSeed(): string {
+  const senha = process.env.SEED_SENHA_PADRAO;
+  if (!senha || senha.length < 12) {
+    throw new Error(
+      "Defina SEED_SENHA_PADRAO no .env (mínimo 12 caracteres) antes de rodar o seed. " +
+        "Gere uma com: node -e \"console.log(require('crypto').randomBytes(12).toString('base64url'))\"",
+    );
+  }
+  return senha;
+}
+
 async function main() {
-  const senhaHashPadrao = await bcrypt.hash("trocar123", 10);
+  const senhaHashPadrao = await bcrypt.hash(senhaDoSeed(), 10);
   const emUmMes = new Date();
   emUmMes.setMonth(emUmMes.getMonth() + 1);
 

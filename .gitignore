@@ -43,3 +43,8 @@ next-env.d.ts
 
 # prisma — client gerado, recriado por `prisma generate`, nao precisa ir pro git
 /src/generated/prisma
+
+# Copias das docs da Prisma para outros editores. A copia canonica e
+# .claude/skills — tres copias identicas no repo so inflam o diff.
+/.agents
+/.windsurf
